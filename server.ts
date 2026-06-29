@@ -350,7 +350,14 @@ app.delete('/api/admin/votes/:id', requireAdmin, async (req, res) => {
 // VITE MIDDLEWARE & FRONTEND SERVING
 // ==========================================
 
+export { app };
+
 async function startServer() {
+  // If running on Vercel, we don't start the standalone express server or Vite dev server
+  if (process.env.VERCEL) {
+    return;
+  }
+
   if (process.env.NODE_ENV !== "production") {
     // Development Mode
     const vite = await createViteServer({
