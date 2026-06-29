@@ -1,0 +1,6 @@
+{
+  "name": "Suara Warga Ringintunggal",
+  "description": "Platform partisipasi warga untuk mendukung prioritas pembangunan desa secara terbuka dan transparan.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
