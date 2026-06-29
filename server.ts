@@ -82,9 +82,9 @@ app.get('/api/captcha', (req, res) => {
 });
 
 // 2. Public API - List all programs
-app.get('/api/programs', (req, res) => {
+app.get('/api/programs', async (req, res) => {
   try {
-    const programs = db.getPrograms();
+    const programs = await db.getPrograms();
     res.json(programs);
   } catch (error) {
     res.status(500).json({ error: "Gagal mengambil daftar program" });
@@ -92,13 +92,13 @@ app.get('/api/programs', (req, res) => {
 });
 
 // 3. Public API - Detail program by slug
-app.get('/api/programs/:slug', (req, res) => {
+app.get('/api/programs/:slug', async (req, res) => {
   try {
-    const program = db.getProgramBySlug(req.params.slug);
+    const program = await db.getProgramBySlug(req.params.slug);
     if (!program) {
       return res.status(404).json({ error: "Program tidak ditemukan" });
     }
-    const votes = db.getVotes(program.id);
+    const votes = await db.getVotes(program.id);
     res.json({ program, votes });
   } catch (error) {
     res.status(500).json({ error: "Gagal mengambil detail program" });
@@ -106,7 +106,7 @@ app.get('/api/programs/:slug', (req, res) => {
 });
 
 // 4. Public API - Vote support
-app.post('/api/programs/:id/vote', (req, res) => {
+app.post('/api/programs/:id/vote', async (req, res) => {
   try {
     const { id } = req.params;
     const { voterName, voterRt, captchaId, captchaAnswer } = req.body;
@@ -141,7 +141,7 @@ app.post('/api/programs/:id/vote', (req, res) => {
     }
     
     // 4. Record vote in DB (handles unique constraint check internally)
-    const result = db.addVote(id, voterName, voterRt, ip);
+    const result = await db.addVote(id, voterName, voterRt, ip);
     
     if (!result.success) {
       return res.status(400).json({ error: result.message });
@@ -168,7 +168,7 @@ app.post('/api/admin/login', (req, res) => {
 });
 
 // 6. Admin API - Create program
-app.post('/api/admin/programs', requireAdmin, (req, res) => {
+app.post('/api/admin/programs', requireAdmin, async (req, res) => {
   try {
     const { title, description, short_description, location, image_url, status } = req.body;
     
@@ -184,12 +184,12 @@ app.post('/api/admin/programs', requireAdmin, (req, res) => {
     
     let slug = baseSlug;
     let count = 1;
-    while (db.getProgramBySlug(slug)) {
+    while (await db.getProgramBySlug(slug)) {
       slug = `${baseSlug}-${count}`;
       count++;
     }
     
-    const program = db.createProgram({
+    const program = await db.createProgram({
       title,
       slug,
       description,
@@ -206,7 +206,7 @@ app.post('/api/admin/programs', requireAdmin, (req, res) => {
 });
 
 // 7. Admin API - Update program
-app.put('/api/admin/programs/:id', requireAdmin, (req, res) => {
+app.put('/api/admin/programs/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { title, description, short_description, location, image_url, status } = req.body;
@@ -222,9 +222,9 @@ app.put('/api/admin/programs/:id', requireAdmin, (req, res) => {
       
       let slug = baseSlug;
       let count = 1;
-      const existing = db.getProgramBySlug(slug);
+      const existing = await db.getProgramBySlug(slug);
       if (existing && existing.id !== id) {
-        while (db.getProgramBySlug(slug)) {
+        while (await db.getProgramBySlug(slug)) {
           slug = `${baseSlug}-${count}`;
           count++;
         }
@@ -237,7 +237,7 @@ app.put('/api/admin/programs/:id', requireAdmin, (req, res) => {
     if (image_url) updates.image_url = image_url;
     if (status) updates.status = status;
     
-    const updated = db.updateProgram(id, updates);
+    const updated = await db.updateProgram(id, updates);
     if (!updated) {
       return res.status(404).json({ error: "Program tidak ditemukan" });
     }
@@ -249,9 +249,9 @@ app.put('/api/admin/programs/:id', requireAdmin, (req, res) => {
 });
 
 // 8. Admin API - Delete program
-app.delete('/api/admin/programs/:id', requireAdmin, (req, res) => {
+app.delete('/api/admin/programs/:id', requireAdmin, async (req, res) => {
   try {
-    const success = db.deleteProgram(req.params.id);
+    const success = await db.deleteProgram(req.params.id);
     if (!success) {
       return res.status(404).json({ error: "Program tidak ditemukan" });
     }
@@ -294,9 +294,9 @@ app.post('/api/admin/upload', requireAdmin, (req, res) => {
 });
 
 // 10. Admin API - Get Stats
-app.get('/api/admin/stats', requireAdmin, (req, res) => {
+app.get('/api/admin/stats', requireAdmin, async (req, res) => {
   try {
-    const stats = db.getStats();
+    const stats = await db.getStats();
     res.json(stats);
   } catch (error) {
     res.status(500).json({ error: "Gagal memuat statistik" });
@@ -304,10 +304,10 @@ app.get('/api/admin/stats', requireAdmin, (req, res) => {
 });
 
 // 11. Admin API - Get All Votes (Support list with searching & filtering)
-app.get('/api/admin/votes', requireAdmin, (req, res) => {
+app.get('/api/admin/votes', requireAdmin, async (req, res) => {
   try {
     const { search, rt, programId } = req.query;
-    let votes = db.getVotes(programId as string);
+    let votes = await db.getVotes(programId as string);
     
     if (search) {
       const q = (search as string).toLowerCase();
@@ -319,13 +319,13 @@ app.get('/api/admin/votes', requireAdmin, (req, res) => {
     }
     
     // Enrich votes with program details
-    const enrichedVotes = votes.map(v => {
-      const prog = db.getProgramById(v.program_id);
+    const enrichedVotes = await Promise.all(votes.map(async (v) => {
+      const prog = await db.getProgramById(v.program_id);
       return {
         ...v,
         program_title: prog ? prog.title : "Program Dihapus"
       };
-    });
+    }));
     
     res.json(enrichedVotes);
   } catch (error) {
@@ -334,9 +334,9 @@ app.get('/api/admin/votes', requireAdmin, (req, res) => {
 });
 
 // 12. Admin API - Delete vote (Spam removal)
-app.delete('/api/admin/votes/:id', requireAdmin, (req, res) => {
+app.delete('/api/admin/votes/:id', requireAdmin, async (req, res) => {
   try {
-    const success = db.deleteVote(req.params.id);
+    const success = await db.deleteVote(req.params.id);
     if (!success) {
       return res.status(404).json({ error: "Dukungan tidak ditemukan" });
     }
