@@ -33,6 +33,7 @@ const DB_FILE = path.join(DATA_DIR, 'db.json');
 // Check if we have Supabase Postgres configuration
 let usePostgres = !!process.env.DATABASE_URL;
 let pool: pg.Pool | null = null;
+let initPromise: Promise<void> | null = null;
 
 if (usePostgres) {
   try {
@@ -47,23 +48,29 @@ if (usePostgres) {
     pool.on('error', (err) => {
       console.error("[DATABASE] Unexpected error on idle PostgreSQL client:", err);
     });
-
-    // Background initialization
-    initPostgresDb().catch(err => {
-      console.error("[DATABASE] Error initializing PostgreSQL tables, falling back to local database:", err);
-      usePostgres = false;
-      pool = null;
-      initLocalDb();
-    });
   } catch (err) {
     console.error("[DATABASE] Failed to create PostgreSQL pool, falling back to local database:", err);
     usePostgres = false;
     pool = null;
+  }
+}
+
+// Function to ensure DB is initialized before any queries are run
+async function ensureDbInitialized() {
+  if (usePostgres && pool) {
+    if (!initPromise) {
+      initPromise = (async () => {
+        try {
+          await initPostgresDb();
+        } catch (err: any) {
+          console.error("[DATABASE] Error in lazy initPostgresDb:", err.message);
+        }
+      })();
+    }
+    await initPromise;
+  } else {
     initLocalDb();
   }
-} else {
-  console.log("[DATABASE] No Database URL detected. Falling back to Local JSON Database...");
-  initLocalDb();
 }
 
 // -------------------------------------------------------------
@@ -325,6 +332,7 @@ function writeDb(data: { programs: Program[]; votes: Vote[] }) {
 // -------------------------------------------------------------
 export const db = {
   async getPrograms(): Promise<Program[]> {
+    await ensureDbInitialized();
     if (usePostgres && pool) {
       const res = await pool.query('SELECT * FROM programs');
       const programs: Program[] = res.rows;
@@ -346,6 +354,7 @@ export const db = {
   },
 
   async getProgramBySlug(slug: string): Promise<Program | null> {
+    await ensureDbInitialized();
     if (usePostgres && pool) {
       const res = await pool.query('SELECT * FROM programs WHERE slug = $1', [slug]);
       return res.rows[0] || null;
@@ -356,6 +365,7 @@ export const db = {
   },
 
   async getProgramById(id: string): Promise<Program | null> {
+    await ensureDbInitialized();
     if (usePostgres && pool) {
       const res = await pool.query('SELECT * FROM programs WHERE id = $1', [id]);
       return res.rows[0] || null;
@@ -366,6 +376,7 @@ export const db = {
   },
 
   async createProgram(data: Omit<Program, 'id' | 'votes_count' | 'created_at' | 'updated_at'>): Promise<Program> {
+    await ensureDbInitialized();
     if (usePostgres && pool) {
       const id = 'p_' + Math.random().toString(36).substr(2, 9);
       const now = new Date().toISOString();
@@ -391,6 +402,7 @@ export const db = {
   },
 
   async updateProgram(id: string, data: Partial<Omit<Program, 'id' | 'votes_count' | 'created_at' | 'updated_at'>>): Promise<Program | null> {
+    await ensureDbInitialized();
     if (usePostgres && pool) {
       const current = await pool.query('SELECT * FROM programs WHERE id = $1', [id]);
       if (current.rows.length === 0) return null;
@@ -428,6 +440,7 @@ export const db = {
   },
 
   async deleteProgram(id: string): Promise<boolean> {
+    await ensureDbInitialized();
     if (usePostgres && pool) {
       const res = await pool.query('DELETE FROM programs WHERE id = $1', [id]);
       return (res.rowCount ?? 0) > 0;
@@ -442,6 +455,7 @@ export const db = {
   },
 
   async getVotes(programId?: string): Promise<Vote[]> {
+    await ensureDbInitialized();
     if (usePostgres && pool) {
       if (programId) {
         const res = await pool.query('SELECT * FROM votes WHERE program_id = $1 ORDER BY created_at DESC', [programId]);
@@ -460,6 +474,7 @@ export const db = {
   },
 
   async addVote(programId: string, voterName: string, voterRt: string, ipAddress: string): Promise<{ success: boolean; message: string; vote?: Vote }> {
+    await ensureDbInitialized();
     if (usePostgres && pool) {
       const progCheck = await pool.query('SELECT * FROM programs WHERE id = $1', [programId]);
       if (progCheck.rows.length === 0) {
@@ -533,6 +548,7 @@ export const db = {
   },
 
   async deleteVote(voteId: string): Promise<boolean> {
+    await ensureDbInitialized();
     if (usePostgres && pool) {
       const voteQuery = await pool.query('SELECT * FROM votes WHERE id = $1', [voteId]);
       if (voteQuery.rows.length === 0) return false;
@@ -567,6 +583,7 @@ export const db = {
   },
 
   async getStats() {
+    await ensureDbInitialized();
     let programs: Program[] = [];
     let votes: Vote[] = [];
 
