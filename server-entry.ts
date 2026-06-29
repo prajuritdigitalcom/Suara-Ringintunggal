@@ -11,10 +11,22 @@ const PORT = 3000;
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Ensure upload directory exists
-const UPLOADS_DIR = path.join(process.cwd(), 'uploads');
-if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+// Ensure upload directory exists safely (handling read-only filesystems on Vercel)
+let UPLOADS_DIR = path.join(process.cwd(), 'uploads');
+try {
+  if (!fs.existsSync(UPLOADS_DIR)) {
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  }
+} catch (err: any) {
+  console.warn("Failed to create UPLOADS_DIR in process.cwd(), falling back to /tmp/uploads:", err.message);
+  UPLOADS_DIR = '/tmp/uploads';
+  try {
+    if (!fs.existsSync(UPLOADS_DIR)) {
+      fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+    }
+  } catch (tmpErr: any) {
+    console.error("Failed to create /tmp/uploads:", tmpErr.message);
+  }
 }
 
 // Serve static uploads
