@@ -301,159 +301,164 @@ export default function AdminPanel({ token, onLogout, onNavigateHome, onSelectPr
   const statusOptions = ['Baru Dibuka', 'Prioritas Tinggi', 'Menunggu Anggaran', 'Dalam Perencanaan', 'Sedang Dikerjakan', 'Selesai', 'Ditunda'];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 pb-20 space-y-8">
+    <div className="w-full max-w-full mx-auto px-4 py-4 pb-24 space-y-5 animate-fadeIn">
       
       {/* Top Welcome Title */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-emerald-100 pb-6">
-        <div>
-          <span className="text-2xs font-bold uppercase tracking-widest text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full">
-            Panel Kontrol Administrator
+      <div className="border-b border-slate-100 pb-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full">
+            Admin Panel
           </span>
-          <h2 className="font-display font-black text-2xl sm:text-3xl text-slate-900 mt-2">
-            Halo, Admin Desa Ringintunggal
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Gunakan panel ini untuk mengelola prioritas usulan pembangunan desa berdasarkan dukungan nyata warga.
-          </p>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={onNavigateHome}
+              className="px-2.5 py-1 text-[11px] font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition-all cursor-pointer"
+            >
+              Lihat Web
+            </button>
+            <button
+              onClick={onLogout}
+              className="px-2.5 py-1 text-[11px] font-bold text-red-700 bg-red-50 hover:bg-red-100 rounded-lg transition-all cursor-pointer"
+            >
+              Keluar
+            </button>
+          </div>
         </div>
-        
-        <div className="flex items-center space-x-2 shrink-0">
-          <button
-            onClick={onNavigateHome}
-            className="px-4 py-2 text-xs sm:text-sm font-semibold text-emerald-800 hover:bg-emerald-50 border border-emerald-100 rounded-full transition-all"
-          >
-            Lihat Website Utama
-          </button>
-          <button
-            onClick={onLogout}
-            className="px-4 py-2 text-xs sm:text-sm font-semibold text-red-700 hover:bg-red-50 border border-red-200 rounded-full transition-all"
-          >
-            Keluar Sesi
-          </button>
+        <div>
+          <h2 className="font-display font-black text-xl text-slate-900">
+            Halo, Admin Desa
+          </h2>
+          <p className="text-[11px] text-slate-500 mt-0.5">
+            Kelola program dan usulan prioritas pembangunan dari warga desa.
+          </p>
         </div>
       </div>
 
       {/* Global Message Notifications */}
       {successMsg && (
-        <div className="p-4 bg-emerald-50 border border-emerald-100 text-emerald-900 text-sm font-semibold rounded-2xl flex items-center space-x-2 shadow-xs">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+        <div className="p-3 bg-emerald-50 border border-emerald-100 text-emerald-950 text-xs font-semibold rounded-xl flex items-center space-x-2 shadow-xs">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>{successMsg}</span>
         </div>
       )}
 
       {apiError && (
-        <div className="p-4 bg-red-50 border border-red-100 text-red-900 text-sm font-semibold rounded-2xl flex items-center space-x-2 shadow-xs">
-          <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
-          <span>{apiError}</span>
-          <button onClick={() => setApiError('')} className="ml-auto text-red-500 font-bold hover:text-red-700">✕</button>
+        <div className="p-3 bg-red-50 border border-red-100 text-red-950 text-xs font-semibold rounded-xl flex items-center space-x-2 shadow-xs">
+          <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+          <span className="flex-1">{apiError}</span>
+          <button onClick={() => setApiError('')} className="text-red-500 font-bold hover:text-red-700 text-xs">✕</button>
         </div>
       )}
 
-      {/* Custom Tabs Navigation */}
-      <div className="flex border-b border-slate-200 gap-1 overflow-x-auto pb-1">
+      {/* Custom Segmented Tab Navigation - Mobile perfect! */}
+      <div className="bg-slate-100 p-1 rounded-xl flex gap-1 w-full border border-slate-200/50">
         <button
           onClick={() => setActiveTab('stats')}
-          className={`px-4 py-3 font-semibold text-sm sm:text-base border-b-2 transition-all whitespace-nowrap cursor-pointer flex items-center space-x-2 ${
+          className={`flex-1 py-2 px-1 rounded-lg font-bold text-2xs transition-all flex flex-col items-center justify-center gap-1 cursor-pointer ${
             activeTab === 'stats'
-              ? 'border-emerald-600 text-emerald-950'
-              : 'border-transparent text-slate-500 hover:text-slate-900'
+              ? 'bg-white text-slate-950 shadow-xs'
+              : 'text-slate-500 hover:text-slate-900'
           }`}
         >
-          <BarChart3 className="w-4.5 h-4.5" />
-          <span>Statistik & Grafik</span>
+          <BarChart3 className="w-4 h-4" />
+          <span>Statistik</span>
         </button>
         
         <button
           onClick={() => setActiveTab('programs')}
-          className={`px-4 py-3 font-semibold text-sm sm:text-base border-b-2 transition-all whitespace-nowrap cursor-pointer flex items-center space-x-2 ${
+          className={`flex-1 py-2 px-1 rounded-lg font-bold text-2xs transition-all flex flex-col items-center justify-center gap-1 cursor-pointer ${
             activeTab === 'programs'
-              ? 'border-emerald-600 text-emerald-950'
-              : 'border-transparent text-slate-500 hover:text-slate-900'
+              ? 'bg-white text-slate-950 shadow-xs'
+              : 'text-slate-500 hover:text-slate-900'
           }`}
         >
-          <FileText className="w-4.5 h-4.5" />
-          <span>Kelola Program ({programs.length})</span>
+          <FileText className="w-4 h-4" />
+          <span>Program ({programs.length})</span>
         </button>
         
         <button
           onClick={() => setActiveTab('votes')}
-          className={`px-4 py-3 font-semibold text-sm sm:text-base border-b-2 transition-all whitespace-nowrap cursor-pointer flex items-center space-x-2 ${
+          className={`flex-1 py-2 px-1 rounded-lg font-bold text-2xs transition-all flex flex-col items-center justify-center gap-1 cursor-pointer ${
             activeTab === 'votes'
-              ? 'border-emerald-600 text-emerald-950'
-              : 'border-transparent text-slate-500 hover:text-slate-900'
+              ? 'bg-white text-slate-950 shadow-xs'
+              : 'text-slate-500 hover:text-slate-900'
           }`}
         >
-          <Users className="w-4.5 h-4.5" />
-          <span>Kelola Dukungan / Spam</span>
+          <Users className="w-4 h-4" />
+          <span>Dukungan</span>
         </button>
       </div>
+
+      {/* ==================================== */}
 
       {/* ==================================== */}
       {/* TAB 1: STATISTICS & GRAPHS           */}
       {/* ==================================== */}
       {activeTab === 'stats' && stats && (
-        <div className="space-y-8 animate-fadeIn">
+        <div className="space-y-5 animate-fadeIn">
           {/* Numbers Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            <div className="p-5 sm:p-6 bg-white rounded-3xl border border-slate-100 shadow-sm">
-              <p className="text-2xs sm:text-xs font-bold uppercase tracking-wider text-slate-400">Total Program</p>
-              <h3 className="text-2xl sm:text-4.5xl font-black text-slate-950 mt-1 leading-none">{stats.totalPrograms}</h3>
-              <p className="text-2xs sm:text-xs text-slate-500 mt-2">Program pembangunan aktif</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="p-3 bg-white rounded-2xl border border-slate-100 shadow-2xs">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Program</p>
+              <h3 className="text-lg font-black text-slate-950 mt-1 leading-none">{stats.totalPrograms}</h3>
+              <p className="text-[9px] text-slate-500 mt-1">Usulan aktif</p>
             </div>
             
-            <div className="p-5 sm:p-6 bg-white rounded-3xl border border-slate-100 shadow-sm">
-              <p className="text-2xs sm:text-xs font-bold uppercase tracking-wider text-slate-400">Total Dukungan</p>
-              <h3 className="text-2xl sm:text-4.5xl font-black text-emerald-900 mt-1 leading-none">{stats.totalVotes}</h3>
-              <p className="text-2xs sm:text-xs text-emerald-600 font-medium mt-2">Hak suara terkumpul</p>
+            <div className="p-3 bg-white rounded-2xl border border-slate-100 shadow-2xs">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Dukungan</p>
+              <h3 className="text-lg font-black text-emerald-900 mt-1 leading-none">{stats.totalVotes}</h3>
+              <p className="text-[9px] text-emerald-600 font-medium mt-1">Suara terverifikasi</p>
             </div>
             
-            <div className="p-5 sm:p-6 bg-white rounded-3xl border border-slate-100 shadow-sm">
-              <p className="text-2xs sm:text-xs font-bold uppercase tracking-wider text-slate-400">Partisipasi Warga</p>
-              <h3 className="text-2xl sm:text-4.5xl font-black text-purple-950 mt-1 leading-none">{stats.totalParticipants}</h3>
-              <p className="text-2xs sm:text-xs text-slate-500 mt-2">Nama unik (RT terdaftar)</p>
+            <div className="p-3 bg-white rounded-2xl border border-slate-100 shadow-2xs">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Partisipasi</p>
+              <h3 className="text-lg font-black text-purple-950 mt-1 leading-none">{stats.totalParticipants}</h3>
+              <p className="text-[9px] text-slate-500 mt-1">Warga terdaftar</p>
             </div>
 
-            <div className="p-5 sm:p-6 bg-white rounded-3xl border border-slate-100 shadow-sm">
-              <p className="text-2xs sm:text-xs font-bold uppercase tracking-wider text-slate-400">Dukungan Hari Ini</p>
-              <h3 className="text-2xl sm:text-4.5xl font-black text-amber-950 mt-1 leading-none">+{stats.votesToday}</h3>
-              <p className="text-2xs sm:text-xs text-slate-500 mt-2">Minggu ini: <span className="font-bold">+{stats.votesThisWeek}</span></p>
+            <div className="p-3 bg-white rounded-2xl border border-slate-100 shadow-2xs">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Hari Ini</p>
+              <h3 className="text-lg font-black text-amber-950 mt-1 leading-none">+{stats.votesToday}</h3>
+              <p className="text-[9px] text-slate-500 mt-1">Minggu ini: <span className="font-bold">+{stats.votesThisWeek}</span></p>
             </div>
           </div>
 
-          <div className="p-5 sm:p-6 bg-white rounded-3xl border border-slate-100 shadow-sm">
-            <p className="text-2xs font-bold uppercase text-slate-400 tracking-wider">Terpopuler Saat Ini</p>
-            <p className="text-base sm:text-xl font-bold text-slate-800 mt-1 flex items-center space-x-2">
-              <Sparkles className="w-5 h-5 text-amber-500 fill-amber-500 shrink-0" />
-              <span>{stats.popularProgram}</span>
-            </p>
+          {/* Terpopuler Banner */}
+          <div className="p-3 bg-emerald-50/50 rounded-2xl border border-emerald-100/50 flex items-center space-x-2">
+            <Sparkles className="w-4 h-4 text-amber-500 fill-amber-500 shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="text-[9px] font-bold uppercase text-emerald-800 tracking-wider">Terpopuler Saat Ini</p>
+              <p className="text-xs font-extrabold text-slate-800 truncate">
+                {stats.popularProgram}
+              </p>
+            </div>
           </div>
 
-          {/* Graphs / Visualization Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Graphs / Visualization */}
+          <div className="space-y-4">
             
-            {/* Dukungan per RT */}
-            <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-6">
+            {/* Sebaran Dukungan per RT */}
+            <div className="bg-white rounded-2xl border border-slate-100 p-4 shadow-2xs space-y-3">
               <div>
-                <h4 className="font-display font-bold text-slate-900 text-base sm:text-lg">Sebaran Dukungan per RT</h4>
-                <p className="text-xs text-slate-500 mt-0.5">Jumlah suara sah dari masing-masing RT</p>
+                <h4 className="font-display font-bold text-slate-900 text-xs">Sebaran Dukungan per RT</h4>
+                <p className="text-[9px] text-slate-500">Jumlah suara sah dari masing-masing RT</p>
               </div>
 
-              {/* Bar charts per RT */}
-              <div className="space-y-4">
+              <div className="space-y-2">
                 {rtOptions.map(rt => {
                   const voteCount = stats.rtDistribution[rt] || 0;
                   const maxVal = Math.max(...Object.values(stats.rtDistribution) as number[], 1);
                   const widthPercent = Math.max(5, (voteCount / maxVal) * 100);
                   
                   return (
-                    <div key={rt} className="flex items-center space-x-3">
-                      <span className="w-12 font-mono font-bold text-xs text-slate-700 shrink-0">{rt}</span>
-                      <div className="flex-1 bg-slate-100 h-6 rounded-lg overflow-hidden relative">
+                    <div key={rt} className="flex items-center space-x-2">
+                      <span className="w-10 font-mono font-bold text-[9px] text-slate-700 shrink-0">{rt}</span>
+                      <div className="flex-1 bg-slate-50 h-5 rounded-md overflow-hidden relative border border-slate-100">
                         <div 
-                          className="bg-emerald-500 h-full rounded-lg transition-all duration-700" 
+                          className="bg-emerald-500 h-full rounded-md transition-all duration-700" 
                           style={{ width: `${widthPercent}%` }}
                         />
-                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-2xs font-black text-slate-800">{voteCount} suara</span>
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] font-extrabold text-slate-800">{voteCount} suara</span>
                       </div>
                     </div>
                   );
@@ -461,29 +466,28 @@ export default function AdminPanel({ token, onLogout, onNavigateHome, onSelectPr
               </div>
             </div>
 
-            {/* Dukungan per Program Rank */}
-            <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-6">
+            {/* Peringkat Prioritas Program */}
+            <div className="bg-white rounded-2xl border border-slate-100 p-4 shadow-2xs space-y-3">
               <div>
-                <h4 className="font-display font-bold text-slate-900 text-base sm:text-lg">Peringkat Prioritas Program</h4>
-                <p className="text-xs text-slate-500 mt-0.5">Urutan popularitas program berdasarkan suara warga</p>
+                <h4 className="font-display font-bold text-slate-900 text-xs">Peringkat Prioritas Program</h4>
+                <p className="text-[9px] text-slate-500">Urutan popularitas berdasarkan suara warga</p>
               </div>
 
-              {/* Programs Bar chart list */}
-              <div className="space-y-5">
+              <div className="space-y-3">
                 {programs.map((p, idx) => {
                   const maxVotes = Math.max(...programs.map(pr => pr.votes_count), 1);
                   const percent = Math.max(5, (p.votes_count / maxVotes) * 100);
                   
                   return (
-                    <div key={p.id} className="space-y-1.5">
-                      <div className="flex items-center justify-between text-xs sm:text-sm">
-                        <span className="font-bold text-slate-800 line-clamp-1 flex items-center space-x-1.5">
-                          <span className="w-5 h-5 rounded-md bg-slate-100 text-slate-700 flex items-center justify-center font-mono text-2xs shrink-0">{idx + 1}</span>
-                          <span>{p.title}</span>
+                    <div key={p.id} className="space-y-1">
+                      <div className="flex items-center justify-between text-2xs">
+                        <span className="font-bold text-slate-800 line-clamp-1 flex items-center space-x-1.5 min-w-0">
+                          <span className="w-4 h-4 rounded bg-slate-100 text-slate-700 flex items-center justify-center font-mono text-[9px] shrink-0">{idx + 1}</span>
+                          <span className="truncate">{p.title}</span>
                         </span>
-                        <span className="font-extrabold text-emerald-800 shrink-0">{p.votes_count} Dukungan</span>
+                        <span className="font-extrabold text-emerald-800 text-[10px] shrink-0 pl-2">{p.votes_count} suara</span>
                       </div>
-                      <div className="w-full bg-slate-100 h-4 rounded-full overflow-hidden">
+                      <div className="w-full bg-slate-50 h-2.5 rounded-full overflow-hidden border border-slate-100">
                         <div 
                           className="bg-emerald-600 h-full rounded-full transition-all duration-700"
                           style={{ width: `${percent}%` }}
@@ -495,39 +499,37 @@ export default function AdminPanel({ token, onLogout, onNavigateHome, onSelectPr
               </div>
             </div>
 
-          </div>
+            {/* Daily growth graph */}
+            <div className="bg-white rounded-2xl border border-slate-100 p-4 shadow-2xs space-y-3">
+              <div>
+                <h4 className="font-display font-bold text-slate-900 text-xs">Grafik Dukungan Harian</h4>
+                <p className="text-[9px] text-slate-500">Pertumbuhan jumlah dukungan harian (7 hari terakhir)</p>
+              </div>
 
-          {/* Daily growth graph */}
-          <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-4">
-            <div>
-              <h4 className="font-display font-bold text-slate-900 text-base sm:text-lg">Grafik Dukungan Harian</h4>
-              <p className="text-xs text-slate-500 mt-0.5">Pertumbuhan jumlah dukungan harian selama 7 hari terakhir</p>
+              <div className="flex items-end justify-between h-36 pt-4 border-b border-slate-100 px-1 gap-1">
+                {stats.dailyGrowth.map(item => {
+                  const maxVal = Math.max(...stats.dailyGrowth.map(g => g.count), 1);
+                  const heightPercent = Math.max(8, (item.count / maxVal) * 80);
+                  
+                  const parts = item.date.split('-');
+                  const label = parts[2] ? `${parts[2]}/${parts[1]}` : item.date;
+
+                  return (
+                    <div key={item.date} className="flex-1 flex flex-col items-center h-full justify-end relative group">
+                      <span className="text-[8px] font-extrabold text-slate-700 mb-0.5">
+                        +{item.count}
+                      </span>
+                      <div 
+                        className="w-full max-w-[20px] bg-emerald-500 rounded-t-sm transition-all duration-500"
+                        style={{ height: `${heightPercent}%` }}
+                      />
+                      <span className="text-[8px] text-slate-400 mt-1 font-mono shrink-0">{label}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
-            {/* Styled custom growth chart */}
-            <div className="flex items-end justify-between h-48 pt-6 border-b border-slate-200 px-4 sm:px-8 gap-2">
-              {stats.dailyGrowth.map(item => {
-                const maxVal = Math.max(...stats.dailyGrowth.map(g => g.count), 1);
-                const heightPercent = Math.max(8, (item.count / maxVal) * 85);
-                
-                // Format date string from YYYY-MM-DD to DD/MM
-                const parts = item.date.split('-');
-                const label = parts[2] ? `${parts[2]}/${parts[1]}` : item.date;
-
-                return (
-                  <div key={item.date} className="flex-1 flex flex-col items-center group h-full justify-end">
-                    <span className="text-3xs font-extrabold text-slate-700 mb-1 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-950 text-white px-1.5 py-0.5 rounded-md pointer-events-none absolute -translate-y-8">
-                      +{item.count}
-                    </span>
-                    <div 
-                      className="w-full max-w-[40px] bg-emerald-500 group-hover:bg-emerald-600 rounded-t-lg transition-all duration-500"
-                      style={{ height: `${heightPercent}%` }}
-                    />
-                    <span className="text-3xs sm:text-xs text-slate-500 mt-2 font-mono">{label}</span>
-                  </div>
-                );
-              })}
-            </div>
           </div>
         </div>
       )}
@@ -734,71 +736,53 @@ export default function AdminPanel({ token, onLogout, onNavigateHome, onSelectPr
 
           {/* Programs Table / Grid list */}
           {programs.length > 0 ? (
-            <div className="overflow-hidden border border-slate-100 bg-white rounded-3xl shadow-sm">
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse text-left text-xs sm:text-sm">
-                  <thead className="bg-slate-50 text-slate-500 font-bold uppercase border-b border-slate-100 text-[10px] sm:text-xs tracking-wider">
-                    <tr>
-                      <th className="py-4 px-6">Program</th>
-                      <th className="py-4 px-4">Status</th>
-                      <th className="py-4 px-4 text-center">Dukungan</th>
-                      <th className="py-4 px-4">Lokasi</th>
-                      <th className="py-4 px-6 text-right">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 font-medium">
-                    {programs.map(p => (
-                      <tr key={p.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="py-4 px-6">
-                          <div className="flex items-center space-x-3">
-                            <img src={p.image_url} alt="" className="w-12 h-8 object-cover rounded-md border border-slate-200 shrink-0" referrerPolicy="no-referrer" />
-                            <div>
-                              <p className="font-bold text-slate-900 line-clamp-1">{p.title}</p>
-                              <p className="text-2xs text-slate-400 mt-0.5 line-clamp-1">{p.short_description}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-4 px-4 whitespace-nowrap">
-                          <span className="inline-flex items-center space-x-1.5 px-2 py-0.5 font-bold text-3xs rounded-md bg-emerald-50 border border-emerald-100 text-emerald-800">
-                            {p.status}
-                          </span>
-                        </td>
-                        <td className="py-4 px-4 text-center font-extrabold text-emerald-800 text-sm sm:text-base">
-                          {p.votes_count}
-                        </td>
-                        <td className="py-4 px-4 max-w-[150px] truncate text-slate-500">
-                          {p.location}
-                        </td>
-                        <td className="py-4 px-6 text-right whitespace-nowrap">
-                          <div className="flex items-center justify-end space-x-1.5">
-                            <button
-                              onClick={() => onSelectProgram(p.slug)}
-                              title="Lihat Detail"
-                              className="p-1.5 bg-slate-50 text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 border border-transparent hover:border-emerald-100 rounded-lg transition-all"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => openEditProgram(p)}
-                              title="Ubah Program"
-                              className="p-1.5 bg-slate-50 text-slate-600 hover:text-blue-700 hover:bg-blue-50 border border-transparent hover:border-blue-100 rounded-lg transition-all"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteProgram(p.id, p.title)}
-                              title="Hapus Program"
-                              className="p-1.5 bg-slate-50 text-slate-600 hover:text-red-700 hover:bg-red-50 border border-transparent hover:border-red-100 rounded-lg transition-all"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            <div className="space-y-3">
+              {programs.map(p => (
+                <div key={p.id} className="bg-white rounded-2xl border border-slate-100 p-3 shadow-2xs flex flex-col gap-3">
+                  <div className="flex gap-3">
+                    <img src={p.image_url} alt="" className="w-20 h-16 object-cover rounded-xl border border-slate-100 shrink-0" referrerPolicy="no-referrer" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="inline-flex px-1.5 py-0.5 font-bold text-[9px] rounded-md bg-emerald-50 border border-emerald-100 text-emerald-800">
+                          {p.status}
+                        </span>
+                        <span className="font-extrabold text-emerald-800 text-[10px] shrink-0 bg-emerald-50/50 px-2 py-0.5 rounded-full">
+                          {p.votes_count} Dukungan
+                        </span>
+                      </div>
+                      <h4 className="font-bold text-slate-900 text-xs mt-1 line-clamp-1">{p.title}</h4>
+                      <p className="text-[10px] text-slate-500 mt-0.5 line-clamp-2 leading-tight">{p.short_description}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-50 text-[10px]">
+                    <span className="text-slate-500 truncate max-w-[120px]">📍 {p.location}</span>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        onClick={() => onSelectProgram(p.slug)}
+                        className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-50 border border-slate-100 text-slate-700 font-bold rounded-lg hover:bg-slate-100 active:scale-95 transition-all cursor-pointer"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Lihat</span>
+                      </button>
+                      <button
+                        onClick={() => openEditProgram(p)}
+                        className="flex items-center gap-1 px-2.5 py-1.5 bg-blue-50 border border-blue-100 text-blue-700 font-bold rounded-lg hover:bg-blue-100 active:scale-95 transition-all cursor-pointer"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                        <span>Ubah</span>
+                      </button>
+                      <button
+                        onClick={() => handleDeleteProgram(p.id, p.title)}
+                        className="flex items-center gap-1 px-2.5 py-1.5 bg-red-50 border border-red-100 text-red-700 font-bold rounded-lg hover:bg-red-100 active:scale-95 transition-all cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Hapus</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
             <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200">
@@ -875,58 +859,41 @@ export default function AdminPanel({ token, onLogout, onNavigateHome, onSelectPr
               <p className="text-slate-500 font-semibold animate-pulse text-sm">Sedang mengambil data dukungan...</p>
             </div>
           ) : votes.length > 0 ? (
-            <div className="overflow-hidden border border-slate-100 bg-white rounded-3xl shadow-sm">
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse text-left text-xs sm:text-sm">
-                  <thead className="bg-slate-50 text-slate-500 font-bold uppercase border-b border-slate-100 text-[10px] sm:text-xs tracking-wider">
-                    <tr>
-                      <th className="py-4 px-6">Pendukung</th>
-                      <th className="py-4 px-4">RT</th>
-                      <th className="py-4 px-4">Program Pilihan</th>
-                      <th className="py-4 px-4">IP Address</th>
-                      <th className="py-4 px-4">Waktu</th>
-                      <th className="py-4 px-6 text-right">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 font-medium">
-                    {votes.map(v => (
-                      <tr key={v.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="py-4 px-6">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-800 flex items-center justify-center font-extrabold text-2xs">
-                              {v.voter_name.charAt(0).toUpperCase()}
-                            </div>
-                            <span className="font-bold text-slate-900">{v.voter_name}</span>
-                          </div>
-                        </td>
-                        <td className="py-4 px-4">
-                          <span className="px-2 py-0.5 bg-emerald-50 border border-emerald-100 rounded font-bold text-emerald-800 text-3xs">
-                            {v.voter_rt}
-                          </span>
-                        </td>
-                        <td className="py-4 px-4 max-w-[200px] truncate font-bold text-slate-700">
-                          {v.program_title}
-                        </td>
-                        <td className="py-4 px-4 font-mono text-slate-500 text-2xs">
-                          {v.ip_address}
-                        </td>
-                        <td className="py-4 px-4 text-slate-400 text-2xs whitespace-nowrap">
-                          {new Date(v.created_at).toLocaleString('id-ID')}
-                        </td>
-                        <td className="py-4 px-6 text-right">
-                          <button
-                            onClick={() => handleDeleteVote(v.id, v.voter_name)}
-                            title="Hapus Dukungan (Deteksi Spam)"
-                            className="p-1.5 hover:bg-red-50 text-slate-400 hover:text-red-700 rounded-lg transition-all cursor-pointer border border-transparent hover:border-red-100"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            <div className="space-y-3">
+              {votes.map(v => (
+                <div key={v.id} className="bg-white rounded-2xl border border-slate-100 p-3.5 shadow-2xs space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center space-x-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-800 flex items-center justify-center font-extrabold text-xs shrink-0">
+                        {v.voter_name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <span className="font-bold text-slate-900 text-xs block truncate">{v.voter_name}</span>
+                        <span className="text-[10px] text-slate-400 font-mono mt-0.5 block">{v.ip_address}</span>
+                      </div>
+                    </div>
+                    <span className="px-2 py-0.5 bg-emerald-50 border border-emerald-100 rounded font-bold text-emerald-800 text-[10px] shrink-0">
+                      RT {v.voter_rt}
+                    </span>
+                  </div>
+
+                  <div className="p-2.5 bg-slate-50/50 border border-slate-100 rounded-xl">
+                    <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Program Pilihan</p>
+                    <p className="text-xs font-bold text-slate-800 line-clamp-1 mt-0.5">{v.program_title}</p>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[10px] pt-1.5 border-t border-slate-50">
+                    <span className="text-slate-400">🕒 {new Date(v.created_at).toLocaleString('id-ID')}</span>
+                    <button
+                      onClick={() => handleDeleteVote(v.id, v.voter_name)}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-red-50 border border-red-100 text-red-700 font-bold rounded-lg hover:bg-red-100 active:scale-95 transition-all cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Hapus & Tandai Spam</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
             <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200">
