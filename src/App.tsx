@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import ProgramCard from './components/ProgramCard';
 import ProgramDetail from './components/ProgramDetail';
-import VoteModal from './components/VoteModal';
 import ShareModal from './components/ShareModal';
 import AdminPanel from './components/AdminPanel';
 import { Program, Vote, ViewType } from './types';
@@ -268,24 +267,24 @@ export default function App() {
                     
                     <div className="relative z-10 flex flex-col items-center text-center space-y-4">
                       {/* Interactive sleek badge */}
-                      <span className="inline-flex items-center space-x-1 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-[9px] font-extrabold uppercase tracking-widest text-emerald-300 border border-white/10">
-                        <Sparkles className="w-3 h-3 text-amber-300 animate-pulse" />
+                      <span className="inline-flex items-center space-x-1 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-[9px] font-extrabold uppercase tracking-widest text-white border border-white/10">
+                        <Sparkles className="w-3 h-3 text-white animate-pulse" />
                         <span>Membangun Desa Bersama</span>
                       </span>
 
                       <div className="space-y-1.5">
                         <h2 className="font-display font-black text-2xl tracking-tight leading-none text-white drop-shadow-xs">
-                          Suara Warga <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-teal-200">Ringintunggal</span>
+                          Suara Warga <span className="text-white">Ringintunggal</span>
                         </h2>
-                        <p className="text-[11px] text-emerald-100/80 font-medium max-w-xs mx-auto leading-relaxed">
+                        <p className="text-[11px] text-white font-medium max-w-xs mx-auto leading-relaxed">
                           Dukungan suara Anda menentukan realisasi prioritas pembangunan desa yang transparan, bersih, & akuntabel.
                         </p>
                       </div>
 
                       {/* Info Bar */}
-                      <div className="flex items-center space-x-1.5 bg-black/25 border border-white/5 rounded-2xl px-3 py-2 text-[10px] text-emerald-200 max-w-xs font-semibold">
-                        <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                        <span className="text-left leading-tight">Urutan otomatis berdasarkan suara terbanyak warga secara real-time</span>
+                      <div className="flex items-center space-x-1.5 bg-black/25 border border-white/5 rounded-2xl px-3 py-2 text-[10px] text-white max-w-xs font-semibold">
+                        <CheckCircle className="w-3.5 h-3.5 text-white shrink-0" />
+                        <span className="text-left leading-tight">Urutan berdasarkan suara terbanyak warga.</span>
                       </div>
                     </div>
                   </div>
@@ -399,7 +398,12 @@ export default function App() {
                   program={selectedProgram}
                   votes={selectedProgramVotes}
                   onBack={handleBackToHome}
-                  onVoteClick={() => setActiveProgramForVote(selectedProgram)}
+                  onVoteSuccess={() => {
+                    fetchProgramsList();
+                    if (selectedProgram) {
+                      handleSelectProgramBySlug(selectedProgram.slug);
+                    }
+                  }}
                   onShareClick={() => setActiveProgramForShare(selectedProgram)}
                 />
               </div>
@@ -513,8 +517,8 @@ export default function App() {
 
               {/* Copyright & Info */}
               <div className="text-[10px] text-slate-400 font-semibold space-y-1">
-                <p>© 2026 Pemerintah Desa Ringintunggal.</p>
-                <p>Hak Cipta Dilindungi Undang-Undang. Dioptimalkan untuk Smartphone.</p>
+                <p>© 2026 Desa Ringintunggal Kecamatan Gayam Kabupaten Bojonegoro.</p>
+                <p>Hak Cipta Dilindungi Undang-Undang.</p>
               </div>
 
               {/* Pindah Tombol Admin ke Footer */}
@@ -554,23 +558,8 @@ export default function App() {
       {/* ======================================= */}
       {/* GLOBAL MODALS INJECTION                 */}
       {/* ======================================= */}
-      
-      {/* 1. Vote Popup Form Modal */}
-      <VoteModal
-        program={activeProgramForVote}
-        isOpen={activeProgramForVote !== null}
-        onClose={() => setActiveProgramForVote(null)}
-        onVoteSuccess={() => {
-          // Refresh program list
-          fetchProgramsList();
-          // If in detail page, refresh active details
-          if (selectedProgram && activeProgramForVote?.id === selectedProgram.id) {
-            handleSelectProgramBySlug(selectedProgram.slug);
-          }
-        }}
-      />
 
-      {/* 2. Share Dialog Modal */}
+      {/* 1. Share Dialog Modal */}
       <ShareModal
         program={activeProgramForShare}
         isOpen={activeProgramForShare !== null}

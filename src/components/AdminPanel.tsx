@@ -736,8 +736,8 @@ export default function AdminPanel({ token, onLogout, onNavigateHome, onSelectPr
               {/* Header */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
                 <div>
-                  <h3 className="font-display font-bold text-slate-800 text-sm sm:text-base">Daftar Pembangunan Desa</h3>
-                  <p className="text-[10px] text-slate-500">Daftar usulan program yang sedang berjalan atau diusulkan.</p>
+                  <h3 className="font-display font-bold text-slate-900 text-base sm:text-lg">Daftar Pembangunan Desa</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Daftar usulan program yang sedang berjalan atau diusulkan.</p>
                 </div>
                 <button
                   onClick={openAddProgram}
@@ -820,7 +820,7 @@ export default function AdminPanel({ token, onLogout, onNavigateHome, onSelectPr
           
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h3 className="font-display font-bold text-slate-900 text-lg sm:text-xl">Kelola Dukungan Warga</h3>
+              <h3 className="font-display font-bold text-slate-900 text-base sm:text-lg">Kelola Dukungan Warga</h3>
               <p className="text-xs text-slate-500 mt-0.5">Analisis keaslian hak suara dan hapus vote yang dicurigai sebagai spam harian.</p>
             </div>
           </div>
