@@ -283,7 +283,7 @@ export default function ProgramDetail({ program, votes, onBack, onVoteSuccess, o
               <h3 className="font-display font-bold text-slate-900 text-base sm:text-lg">
                 Formulir Dukungan Warga
               </h3>
-              <p className="text-2xs sm:text-xs text-slate-500">1 nama & RT hanya bisa mendukung 1 kali</p>
+              <p className="text-[9px] sm:text-xs text-slate-500">1 nama & RT hanya bisa mendukung 1 kali</p>
             </div>
           </div>
         </div>
@@ -350,16 +350,16 @@ export default function ProgramDetail({ program, votes, onBack, onVoteSuccess, o
               {/* Captcha Section */}
               <div className="p-4 bg-emerald-50/50 border border-emerald-100/60 rounded-2xl space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-2xs font-bold uppercase text-emerald-800 tracking-wider">
+                  <span className="text-[9px] sm:text-[10px] font-bold uppercase text-emerald-800 tracking-wider">
                     Verifikasi Anti-Spam (Wajib)
                   </span>
                   <button
                     type="button"
                     onClick={fetchCaptcha}
                     disabled={loadingCaptcha || isSubmitting}
-                    className="inline-flex items-center space-x-1 text-2xs font-medium text-emerald-700 hover:text-emerald-900 transition-all cursor-pointer disabled:opacity-50"
+                    className="inline-flex items-center space-x-1 text-[9px] sm:text-[10px] font-medium text-emerald-700 hover:text-emerald-900 transition-all cursor-pointer disabled:opacity-50"
                   >
-                    <RefreshCw className={`w-3 h-3 ${loadingCaptcha ? 'animate-spin' : ''}`} />
+                    <RefreshCw className={`w-2.5 h-2.5 ${loadingCaptcha ? 'animate-spin' : ''}`} />
                     <span>Muat Ulang</span>
                   </button>
                 </div>
@@ -397,7 +397,7 @@ export default function ProgramDetail({ program, votes, onBack, onVoteSuccess, o
                 <span>{isSubmitting ? 'Mengirimkan Dukungan...' : 'Kirim Dukungan Resmi'}</span>
               </button>
 
-              <p className="text-3xs text-center text-slate-400 leading-tight">
+              <p className="text-[8px] sm:text-[10px] text-center text-slate-400 leading-tight">
                 *Dengan mengirimkan dukungan, nama dan RT Anda akan dicatat secara transparan pada daftar pendukung publik program ini.
               </p>
             </form>
