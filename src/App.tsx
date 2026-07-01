@@ -470,15 +470,7 @@ export default function App() {
                       {loginLoading ? 'Memproses Masuk...' : 'Masuk Administrator'}
                     </button>
 
-                    <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 text-center">
-                      <p className="text-[8px] text-slate-400 uppercase font-extrabold tracking-wider">Demo Credentials</p>
-                      <p className="text-[10px] text-slate-600 mt-1">
-                        Email: <span className="font-mono font-bold text-slate-900">admin@ringintunggal.desa.id</span>
-                      </p>
-                      <p className="text-[10px] text-slate-600 mt-0.5">
-                        Password: <span className="font-mono font-bold text-slate-900">desa2026</span>
-                      </p>
-                    </div>
+
                   </form>
                 </div>
               </div>
