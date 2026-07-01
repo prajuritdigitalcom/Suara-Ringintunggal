@@ -273,8 +273,9 @@ export default function App() {
                       </span>
 
                       <div className="space-y-1.5">
-                        <h2 className="font-display font-black text-2xl tracking-tight leading-none text-white drop-shadow-xs">
-                          Suara Warga <span className="text-white">Ringintunggal</span>
+                        <h2 className="font-display font-black text-2xl tracking-tight leading-tight text-white drop-shadow-xs">
+                          Suara Warga<br />
+                          Desa Ringintunggal
                         </h2>
                         <p className="text-[11px] text-white font-medium max-w-xs mx-auto leading-relaxed">
                           Dukungan suara Anda menentukan realisasi prioritas pembangunan desa yang transparan, bersih, & akuntabel.
