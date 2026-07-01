@@ -440,7 +440,7 @@ export default function App() {
                         id="email"
                         type="email"
                         required
-                        placeholder="admin@ringintunggal.desa.id"
+                        placeholder="nama@email.com"
                         value={adminEmail}
                         onChange={(e) => setAdminEmail(e.target.value)}
                         disabled={loginLoading}
