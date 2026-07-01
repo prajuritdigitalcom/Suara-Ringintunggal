@@ -97,8 +97,9 @@ app.get('/api/programs', async (req, res) => {
   try {
     const programs = await db.getPrograms();
     res.json(programs);
-  } catch (error) {
-    res.status(500).json({ error: "Gagal mengambil daftar program" });
+  } catch (error: any) {
+    console.error("[API] Error fetching programs:", error);
+    res.status(500).json({ error: "Gagal mengambil daftar program: " + error.message });
   }
 });
 
@@ -111,8 +112,9 @@ app.get('/api/programs/:slug', async (req, res) => {
     }
     const votes = await db.getVotes(program.id);
     res.json({ program, votes });
-  } catch (error) {
-    res.status(500).json({ error: "Gagal mengambil detail program" });
+  } catch (error: any) {
+    console.error("[API] Error fetching program detail:", error);
+    res.status(500).json({ error: "Gagal mengambil detail program: " + error.message });
   }
 });
 
@@ -211,8 +213,9 @@ app.post('/api/admin/programs', requireAdmin, async (req, res) => {
     });
     
     res.json({ success: true, program });
-  } catch (error) {
-    res.status(500).json({ error: "Gagal membuat program baru" });
+  } catch (error: any) {
+    console.error("[API] Error creating program:", error);
+    res.status(500).json({ error: "Gagal membuat program baru: " + error.message });
   }
 });
 
@@ -254,8 +257,9 @@ app.put('/api/admin/programs/:id', requireAdmin, async (req, res) => {
     }
     
     res.json({ success: true, program: updated });
-  } catch (error) {
-    res.status(500).json({ error: "Gagal memperbarui program" });
+  } catch (error: any) {
+    console.error("[API] Error updating program:", error);
+    res.status(500).json({ error: "Gagal memperbarui program: " + error.message });
   }
 });
 
@@ -267,8 +271,9 @@ app.delete('/api/admin/programs/:id', requireAdmin, async (req, res) => {
       return res.status(404).json({ error: "Program tidak ditemukan" });
     }
     res.json({ success: true, message: "Program berhasil dihapus" });
-  } catch (error) {
-    res.status(500).json({ error: "Gagal menghapus program" });
+  } catch (error: any) {
+    console.error("[API] Error deleting program:", error);
+    res.status(500).json({ error: "Gagal menghapus program: " + error.message });
   }
 });
 
@@ -299,8 +304,9 @@ app.post('/api/admin/upload', requireAdmin, (req, res) => {
     
     // Return relative URL path
     res.json({ url: `/uploads/${uniqueFileName}` });
-  } catch (error) {
-    res.status(500).json({ error: "Gagal mengunggah gambar" });
+  } catch (error: any) {
+    console.error("[API] Error uploading image:", error);
+    res.status(500).json({ error: "Gagal mengunggah gambar: " + error.message });
   }
 });
 
@@ -309,8 +315,9 @@ app.get('/api/admin/stats', requireAdmin, async (req, res) => {
   try {
     const stats = await db.getStats();
     res.json(stats);
-  } catch (error) {
-    res.status(500).json({ error: "Gagal memuat statistik" });
+  } catch (error: any) {
+    console.error("[API] Error fetching stats:", error);
+    res.status(500).json({ error: "Gagal memuat statistik: " + error.message });
   }
 });
 
@@ -339,8 +346,9 @@ app.get('/api/admin/votes', requireAdmin, async (req, res) => {
     }));
     
     res.json(enrichedVotes);
-  } catch (error) {
-    res.status(500).json({ error: "Gagal memuat daftar pendukung" });
+  } catch (error: any) {
+    console.error("[API] Error fetching votes list:", error);
+    res.status(500).json({ error: "Gagal memuat daftar pendukung: " + error.message });
   }
 });
 
@@ -352,8 +360,9 @@ app.delete('/api/admin/votes/:id', requireAdmin, async (req, res) => {
       return res.status(404).json({ error: "Dukungan tidak ditemukan" });
     }
     res.json({ success: true, message: "Dukungan berhasil dihapus" });
-  } catch (error) {
-    res.status(500).json({ error: "Gagal menghapus dukungan" });
+  } catch (error: any) {
+    console.error("[API] Error deleting vote:", error);
+    res.status(500).json({ error: "Gagal menghapus dukungan: " + error.message });
   }
 });
 

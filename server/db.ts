@@ -1,8 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import pg from 'pg';
-
-const { Pool } = pg;
+import { createClient } from '@supabase/supabase-js';
 
 export interface Program {
   id: string;
@@ -27,45 +25,66 @@ export interface Vote {
   created_at: string;
 }
 
-const DATA_DIR = path.join(process.cwd(), 'data');
-const DB_FILE = path.join(DATA_DIR, 'db.json');
+let DATA_DIR = path.join(process.cwd(), 'data');
+let DB_FILE = path.join(DATA_DIR, 'db.json');
 
-// Check if we have Supabase Postgres configuration
-let usePostgres = !!process.env.DATABASE_URL;
-let pool: pg.Pool | null = null;
-let initPromise: Promise<void> | null = null;
+// Safely determine writeable DB_FILE path for environments like Vercel
+try {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+  const testFile = path.join(DATA_DIR, '.write_test');
+  fs.writeFileSync(testFile, 'test');
+  fs.unlinkSync(testFile);
+} catch (err: any) {
+  console.warn("[DATABASE] process.cwd()/data is not writeable, falling back to /tmp/db.json:", err.message);
+  DATA_DIR = '/tmp';
+  DB_FILE = path.join(DATA_DIR, 'db.json');
+}
 
-if (usePostgres) {
-  try {
-    console.log("[DATABASE] Database URL detected. Initializing Supabase PostgreSQL Connection Pool...");
-    pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: {
-        rejectUnauthorized: false
-      }
-    });
+// Check if we should use Supabase (either through DATABASE_URL or direct SUPABASE envs)
+let usePostgres = !!(process.env.DATABASE_URL || process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL);
 
-    pool.on('error', (err) => {
-      console.error("[DATABASE] Unexpected error on idle PostgreSQL client:", err);
-    });
-  } catch (err) {
-    console.error("[DATABASE] Failed to create PostgreSQL pool, falling back to local database:", err);
-    usePostgres = false;
-    pool = null;
+let supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+let supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+// Auto-extract project reference from DATABASE_URL if needed
+if (!supabaseUrl && process.env.DATABASE_URL) {
+  const match = process.env.DATABASE_URL.match(/@db\.(.*?)\.supabase\.co/);
+  if (match && match[1]) {
+    supabaseUrl = `https://${match[1]}.supabase.co`;
   }
 }
 
-// Function to ensure DB is initialized before any queries are run
+// Fallback to user's provided project details if still not resolved
+if (!supabaseUrl) {
+  supabaseUrl = 'https://ppgdjrmcjsphrzynawkl.supabase.co';
+}
+if (!supabaseAnonKey) {
+  supabaseAnonKey = 'sb_publishable_ytQ5GSpM77ODYpYTxajU4Q_N6v6bWTt';
+}
+
+console.log("[DATABASE] Initializing Supabase client with URL:", supabaseUrl);
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+let initPromise: Promise<void> | null = null;
+
+// Function to ensure DB is initialized
 async function ensureDbInitialized() {
-  if (usePostgres && pool) {
+  if (usePostgres) {
     if (!initPromise) {
       initPromise = (async () => {
         try {
-          await initPostgresDb();
+          console.log("[DATABASE] Supabase API Client connection active.");
+          // Seed initial datasets if empty (via API)
+          const { data, error } = await supabase.from('programs').select('id');
+          if (!error && (!data || data.length === 0)) {
+            console.log("[DATABASE] Supabase tables are empty. Seeding initial development datasets...");
+            await seedSupabaseDb();
+          }
         } catch (err: any) {
-          console.error("[DATABASE] Error in lazy initPostgresDb, falling back to local database:", err.message);
+          console.error("[DATABASE] Error initializing Supabase, falling back to local database:", err.message);
           usePostgres = false;
-          pool = null;
         }
       })();
     }
@@ -78,144 +97,97 @@ async function ensureDbInitialized() {
   }
 }
 
-// -------------------------------------------------------------
-// POSTGRES DB SCHEMAS AND DATA SEEDING
-// -------------------------------------------------------------
-async function initPostgresDb() {
-  if (!pool) return;
-  const client = await pool.connect();
-  try {
-    console.log("[DATABASE] Creating PostgreSQL tables if they do not exist...");
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS programs (
-        id TEXT PRIMARY KEY,
-        title TEXT NOT NULL,
-        slug TEXT UNIQUE NOT NULL,
-        description TEXT NOT NULL,
-        short_description TEXT NOT NULL,
-        location TEXT NOT NULL,
-        image_url TEXT NOT NULL,
-        votes_count INTEGER DEFAULT 0,
-        status TEXT NOT NULL,
-        created_at TIMESTAMPTZ DEFAULT NOW(),
-        updated_at TIMESTAMPTZ DEFAULT NOW()
-      );
-    `);
-
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS votes (
-        id TEXT PRIMARY KEY,
-        program_id TEXT REFERENCES programs(id) ON DELETE CASCADE,
-        voter_name TEXT NOT NULL,
-        voter_rt TEXT NOT NULL,
-        ip_address TEXT NOT NULL,
-        created_at TIMESTAMPTZ DEFAULT NOW(),
-        UNIQUE(program_id, voter_name, voter_rt)
-      );
-    `);
-
-    // Seed if empty
-    const checkRes = await client.query('SELECT COUNT(*) FROM programs');
-    const count = parseInt(checkRes.rows[0].count, 10);
-    if (count === 0) {
-      console.log("[DATABASE] Supabase tables are empty. Seeding initial development datasets...");
-      
-      const initialPrograms = [
-        {
-          id: "p1",
-          title: "Perbaikan Jalan RT 03",
-          slug: "perbaikan-jalan-rt-03",
-          description: "Jalan lingkungan di wilayah RT 03 merupakan akses vital bagi warga untuk aktivitas sehari-hari dan sekolah anak-anak. Saat ini kondisi jalan berupa tanah dan batu pecah yang sebagian besar sudah terkikis, sehingga sangat licin dan tergenang air saat musim hujan. Program ini mengusulkan pengerasan jalan menggunakan paving block berkualitas tinggi sepanjang 150 meter dengan lebar 3 meter, lengkap dengan pembangunan saluran drainase di sisi kanan dan kiri jalan agar air tidak meluap ke halaman rumah warga.",
-          short_description: "Paving jalan sepanjang 150 meter yang mengalami kerusakan parah dan membahayakan warga saat musim hujan.",
-          location: "RT 03 RW 01, Dusun Krajan",
-          image_url: "https://images.unsplash.com/photo-1541535650810-10d26f5c2ab3?auto=format&fit=crop&q=80&w=800",
-          votes_count: 32,
-          status: "Prioritas Tinggi"
-        },
-        {
-          id: "p2",
-          title: "Pembangunan Jembatan Tani Dusun Selatan",
-          slug: "pembangunan-jembatan-tani-dusun-selatan",
-          description: "Akses jalan usaha tani menuju persawahan Dusun Selatan saat ini terhambat oleh sungai kecil selebar 4 meter. Selama ini warga terpaksa menggunakan jembatan jembatan bambu sementara yang sangat rawan ambruk jika dilewati kendaraan bermotor atau saat debit air sungai naik. Pembangunan jembatan beton permanen dengan fondasi cakar ayam akan memudahkan lalu lintas kendaraan roda tiga dan traktor pengangkut hasil pertanian, serta meningkatkan efisiensi waktu panen warga.",
-          short_description: "Pembangunan jembatan beton penghubung area persawahan Dusun Selatan untuk memudahkan transportasi hasil panen.",
-          location: "Dusun Selatan, Area Persawahan Blok B",
-          image_url: "https://images.unsplash.com/photo-1513828583845-9be990023ee7?auto=format&fit=crop&q=80&w=800",
-          votes_count: 24,
-          status: "Baru Dibuka"
-        },
-        {
-          id: "p3",
-          title: "Revitalisasi Posyandu RT 05",
-          slug: "revitalisasi-posyandu-rt-05",
-          description: "Gedung Posyandu RT 05 yang melayani pemeriksaan kesehatan balita dan lansia saat ini mengalami kerusakan fisik sedang, seperti atap bocor di beberapa titik dan tembok yang retak-retak. Revitalisasi ini meliputi perbaikan atap, plesteran dinding, pengecatan ulang dengan warna cerah ramah anak, pembuatan ruang laktasi/menyusui yang nyaman, serta pengadaan meja kursi pelayanan, timbangan digital bayi, dan alat ukur tinggi badan yang modern.",
-          location: "RT 05 RW 02, Dusun Krajan Tengah",
-          short_description: "Perbaikan fasilitas fisik Posyandu untuk meningkatkan kenyamanan pelayanan kesehatan ibu, balita, dan lansia.",
-          image_url: "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&q=80&w=800",
-          votes_count: 15,
-          status: "Dalam Perencanaan"
-        },
-        {
-          id: "p4",
-          title: "Penerangan Jalan Desa Jalur Utama",
-          slug: "penerangan-jalan-desa-jalur-utama",
-          description: "Jalan utama masuk desa sepanjang kurang lebih 1 kilometer saat ini belum memiliki fasilitas penerangan jalan yang memadai. Kondisi ini menyebabkan jalan menjadi sangat gelap gulita di malam hari, sehingga rawan memicu kecelakaan berkendara dan tindakan kriminalitas. Program ini mengusulkan pengadaan dan pemasangan 15 titik lampu penerangan jalan umum bertenaga surya (solar cell) otomatis yang hemat energi dan ramah lingkungan.",
-          short_description: "Pemasangan 15 titik lampu jalan bertenaga surya sepanjang jalur transportasi utama masuk desa.",
-          location: "Jalan Utama Desa Ringintunggal",
-          image_url: "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&q=80&w=800",
-          votes_count: 41,
-          status: "Menunggu Anggaran"
-        },
-        {
-          id: "p5",
-          title: "Penyediaan Air Bersih Dusun Utara",
-          slug: "penyediaan-air-bersih-dusun-utara",
-          description: "Wilayah Dusun Utara (RT 08 dan RT 09) selalu mengalami krisis air bersih setiap kali musim kemarau tiba karena sumur-sumur galian warga mengering. Untuk solusi jangka panjang, program ini mengusulkan pembuatan sumur bor dalam (artesis) sedalam 60 meter, pembangunan bak penampung air utama (tandon) berkapasitas 5.000 liter, serta pemasangan pipa distribusi sepanjang 800 meter menuju 50 rumah tangga yang paling terdampak kekeringan.",
-          short_description: "Pembangunan sumur bor dalam dan jaringan pipa distribusi air bersih ke 50 rumah warga terdampak kekeringan.",
-          location: "Dusun Utara, RT 08 & RT 09",
-          image_url: "https://images.unsplash.com/photo-1581244277943-fe4a9c777189?auto=format&fit=crop&q=80&w=800",
-          votes_count: 52,
-          status: "Sedang Dikerjakan"
-        }
-      ];
-
-      for (const p of initialPrograms) {
-        await client.query(`
-          INSERT INTO programs (id, title, slug, description, short_description, location, image_url, votes_count, status, created_at, updated_at)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
-        `, [p.id, p.title, p.slug, p.description, p.short_description, p.location, p.image_url, p.votes_count, p.status]);
-      }
-
-      const initialVotes = [
-        { id: "v1", program_id: "p1", voter_name: "Ahmad", voter_rt: "RT 01", ip_address: "127.0.0.1", created_at: "2026-06-02T10:00:00.000Z" },
-        { id: "v2", program_id: "p1", voter_name: "Budi Santoso", voter_rt: "RT 03", ip_address: "127.0.0.1", created_at: "2026-06-02T11:20:00.000Z" },
-        { id: "v3", program_id: "p1", voter_name: "Siti Aminah", voter_rt: "RT 03", ip_address: "127.0.0.1", created_at: "2026-06-03T09:15:00.000Z" },
-        { id: "v4", program_id: "p1", voter_name: "Eko Prasetyo", voter_rt: "RT 03", ip_address: "127.0.0.1", created_at: "2026-06-04T15:30:00.000Z" },
-        { id: "v5", program_id: "p1", voter_name: "Dewi Lestari", voter_rt: "RT 02", ip_address: "127.0.0.1", created_at: "2026-06-05T08:45:00.000Z" },
-        { id: "v6", program_id: "p2", voter_name: "Sugeng", voter_rt: "RT 06", ip_address: "127.0.0.1", created_at: "2026-06-11T14:10:00.000Z" },
-        { id: "v7", program_id: "p2", voter_name: "Joko", voter_rt: "RT 07", ip_address: "127.0.0.1", created_at: "2026-06-12T16:22:00.000Z" },
-        { id: "v8", program_id: "p2", voter_name: "Hartono", voter_rt: "RT 07", ip_address: "127.0.0.1", created_at: "2026-06-13T11:05:00.000Z" },
-        { id: "v9", program_id: "p5", voter_name: "Warto", voter_rt: "RT 08", ip_address: "127.0.0.1", created_at: "2026-05-16T10:00:00.000Z" },
-        { id: "v10", program_id: "p5", voter_name: "Sumiati", voter_rt: "RT 09", ip_address: "127.0.0.1", created_at: "2026-05-17T09:30:00.000Z" },
-        { id: "v11", program_id: "p5", voter_name: "Supardi", voter_rt: "RT 08", ip_address: "127.0.0.1", created_at: "2026-05-18T14:15:00.000Z" }
-      ];
-
-      for (const v of initialVotes) {
-        await client.query(`
-          INSERT INTO votes (id, program_id, voter_name, voter_rt, ip_address, created_at)
-          VALUES ($1, $2, $3, $4, $5, $6)
-        `, [v.id, v.program_id, v.voter_name, v.voter_rt, v.ip_address, v.created_at]);
-      }
-
-      console.log("[DATABASE] Seed complete!");
+async function seedSupabaseDb() {
+  const initialPrograms = [
+    {
+      id: "p1",
+      title: "Perbaikan Jalan RT 03",
+      slug: "perbaikan-jalan-rt-03",
+      description: "Jalan lingkungan di wilayah RT 03 merupakan akses vital bagi warga untuk aktivitas sehari-hari dan sekolah anak-anak. Saat ini kondisi jalan berupa tanah dan batu pecah yang sebagian besar sudah terkikis, sehingga sangat licin dan tergenang air saat musim hujan. Program ini mengusulkan pengerasan jalan menggunakan paving block berkualitas tinggi sepanjang 150 meter dengan lebar 3 meter, lengkap dengan pembangunan saluran drainase di sisi kanan dan kiri jalan agar air tidak meluap ke halaman rumah warga.",
+      short_description: "Paving jalan sepanjang 150 meter yang mengalami kerusakan parah dan membahayakan warga saat musim hujan.",
+      location: "RT 03 RW 01, Dusun Krajan",
+      image_url: "https://images.unsplash.com/photo-1541535650810-10d26f5c2ab3?auto=format&fit=crop&q=80&w=800",
+      votes_count: 32,
+      status: "Prioritas Tinggi"
+    },
+    {
+      id: "p2",
+      title: "Pembangunan Jembatan Tani Dusun Selatan",
+      slug: "pembangunan-jembatan-tani-dusun-selatan",
+      description: "Akses jalan usaha tani menuju persawahan Dusun Selatan saat ini terhambat oleh sungai kecil selebar 4 meter. Selama ini warga terpaksa menggunakan jembatan jembatan bambu sementara yang sangat rawan ambruk jika dilewati kendaraan bermotor atau saat debit air sungai naik. Pembangunan jembatan beton permanen dengan fondasi cakar ayam akan memudahkan lalu lintas kendaraan roda tiga dan traktor pengangkut hasil pertanian, serta meningkatkan efisiensi waktu panen warga.",
+      short_description: "Pembangunan jembatan beton penghubung area persawahan Dusun Selatan untuk memudahkan transportasi hasil panen.",
+      location: "Dusun Selatan, Area Persawahan Blok B",
+      image_url: "https://images.unsplash.com/photo-1513828583845-9be990023ee7?auto=format&fit=crop&q=80&w=800",
+      votes_count: 24,
+      status: "Baru Dibuka"
+    },
+    {
+      id: "p3",
+      title: "Revitalisasi Posyandu RT 05",
+      slug: "revitalisasi-posyandu-rt-05",
+      description: "Gedung Posyandu RT 05 yang melayani pemeriksaan kesehatan balita dan lansia saat ini mengalami kerusakan fisik sedang, seperti atap bocor di beberapa titik dan tembok yang retak-retak. Revitalisasi ini meliputi perbaikan atap, plesteran dinding, pengecatan ulang dengan warna cerah ramah anak, pembuatan ruang laktasi/menyusui yang nyaman, serta pengadaan meja kursi pelayanan, timbangan digital bayi, dan alat ukur tinggi badan yang modern.",
+      location: "RT 05 RW 02, Dusun Krajan Tengah",
+      short_description: "Perbaikan fasilitas fisik Posyandu untuk meningkatkan kenyamanan pelayanan kesehatan ibu, balita, dan lansia.",
+      image_url: "https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&q=80&w=800",
+      votes_count: 15,
+      status: "Dalam Perencanaan"
+    },
+    {
+      id: "p4",
+      title: "Penerangan Jalan Desa Jalur Utama",
+      slug: "penerangan-jalan-desa-jalur-utama",
+      description: "Jalan utama masuk desa sepanjang kurang lebih 1 kilometer saat ini belum memiliki fasilitas penerangan jalan yang memadai. Kondisi ini menyebabkan jalan menjadi sangat gelap gulita di malam hari, sehingga rawan memicu kecelakaan berkendara dan tindakan kriminalitas. Program ini mengusulkan pengadaan dan pemasangan 15 titik lampu penerangan jalan umum bertenaga surya (solar cell) otomatis yang hemat energi dan ramah lingkungan.",
+      short_description: "Pemasangan 15 titik lampu jalan bertenaga surya sepanjang jalur transportasi utama masuk desa.",
+      location: "Jalan Utama Desa Ringintunggal",
+      image_url: "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&q=80&w=800",
+      votes_count: 41,
+      status: "Menunggu Anggaran"
+    },
+    {
+      id: "p5",
+      title: "Penyediaan Air Bersih Dusun Utara",
+      slug: "penyediaan-air-bersih-dusun-utara",
+      description: "Wilayah Dusun Utara (RT 08 dan RT 09) selalu mengalami krisis air bersih setiap kali musim kemarau tiba karena sumur-sumur galian warga mengering. Untuk solusi jangka panjang, program ini mengusulkan pembuatan sumur bor dalam (artesis) sedalam 60 meter, pembangunan bak penampung air utama (tandon) berkapasitas 5.000 liter, serta pemasangan pipa distribusi sepanjang 800 meter menuju 50 rumah tangga yang paling terdampak kekeringan.",
+      short_description: "Pembangunan sumur bor dalam and jaringan pipa distribusi air bersih ke 50 rumah warga terdampak kekeringan.",
+      location: "Dusun Utara, RT 08 & RT 09",
+      image_url: "https://images.unsplash.com/photo-1581244277943-fe4a9c777189?auto=format&fit=crop&q=80&w=800",
+      votes_count: 52,
+      status: "Sedang Dikerjakan"
     }
-  } finally {
-    client.release();
-  }
+  ];
+
+  await supabase.from('programs').upsert(initialPrograms.map(p => ({
+    id: p.id,
+    title: p.title,
+    slug: p.slug,
+    description: p.description,
+    short_description: p.short_description,
+    location: p.location,
+    image_url: p.image_url,
+    votes_count: p.votes_count,
+    status: p.status,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  })));
+
+  const initialVotes = [
+    { id: "v1", program_id: "p1", voter_name: "Ahmad", voter_rt: "RT 01", ip_address: "127.0.0.1", created_at: "2026-06-02T10:00:00.000Z" },
+    { id: "v2", program_id: "p1", voter_name: "Budi Santoso", voter_rt: "RT 03", ip_address: "127.0.0.1", created_at: "2026-06-02T11:20:00.000Z" },
+    { id: "v3", program_id: "p1", voter_name: "Siti Aminah", voter_rt: "RT 03", ip_address: "127.0.0.1", created_at: "2026-06-03T09:15:00.000Z" },
+    { id: "v4", program_id: "p1", voter_name: "Eko Prasetyo", voter_rt: "RT 03", ip_address: "127.0.0.1", created_at: "2026-06-04T15:30:00.000Z" },
+    { id: "v5", program_id: "p1", voter_name: "Dewi Lestari", voter_rt: "RT 02", ip_address: "127.0.0.1", created_at: "2026-06-05T08:45:00.000Z" },
+    { id: "v6", program_id: "p2", voter_name: "Sugeng", voter_rt: "RT 06", ip_address: "127.0.0.1", created_at: "2026-06-11T14:10:00.000Z" },
+    { id: "v7", program_id: "p2", voter_name: "Joko", voter_rt: "RT 07", ip_address: "127.0.0.1", created_at: "2026-06-12T16:22:00.000Z" },
+    { id: "v8", program_id: "p2", voter_name: "Hartono", voter_rt: "RT 07", ip_address: "127.0.0.1", created_at: "2026-06-13T11:05:00.000Z" },
+    { id: "v9", program_id: "p5", voter_name: "Warto", voter_rt: "RT 08", ip_address: "127.0.0.1", created_at: "2026-05-16T10:00:00.000Z" },
+    { id: "v10", program_id: "p5", voter_name: "Sumiati", voter_rt: "RT 09", ip_address: "127.0.0.1", created_at: "2026-05-17T09:30:00.000Z" },
+    { id: "v11", program_id: "p5", voter_name: "Supardi", voter_rt: "RT 08", ip_address: "127.0.0.1", created_at: "2026-05-18T14:15:00.000Z" }
+  ];
+
+  await supabase.from('votes').upsert(initialVotes);
+  console.log("[DATABASE] Supabase Seeding complete!");
 }
 
-// -------------------------------------------------------------
-// LOCAL JSON DB BACKEND (FALLBACK)
-// -------------------------------------------------------------
 function initLocalDb() {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -240,7 +212,7 @@ function initLocalDb() {
         id: "p2",
         title: "Pembangunan Jembatan Tani Dusun Selatan",
         slug: "pembangunan-jembatan-tani-dusun-selatan",
-        description: "Akses jalan usaha tani menuju persawahan Dusun Selatan saat ini terhambat oleh sungai kecil selebar 4 meter. Selama ini warga terpaksa menggunakan jembatan bambu sementara yang sangat rawan ambruk jika dilewati kendaraan bermotor atau saat debit air sungai naik. Pembangunan jembatan beton permanen dengan fondasi cakar ayam akan memudahkan lalu lintas kendaraan roda tiga dan traktor pengangkut hasil pertanian, serta meningkatkan efisiensi waktu panen warga.",
+        description: "Akses jalan usaha tani menuju persawahan Dusun Selatan saat ini terhambat oleh sungai kecil selebar 4 meter. Selama ini warga terpaksa menggunakan jembatan jembatan bambu sementara yang sangat rawan ambruk jika dilewati kendaraan bermotor atau saat debit air sungai naik. Pembangunan jembatan beton permanen dengan fondasi cakar ayam akan memudahkan lalu lintas kendaraan roda tiga dan traktor pengangkut hasil pertanian, serta meningkatkan efisiensi waktu panen warga.",
         short_description: "Pembangunan jembatan beton penghubung area persawahan Dusun Selatan untuk memudahkan transportasi hasil panen.",
         location: "Dusun Selatan, Area Persawahan Blok B",
         image_url: "https://images.unsplash.com/photo-1513828583845-9be990023ee7?auto=format&fit=crop&q=80&w=800",
@@ -332,16 +304,16 @@ function writeDb(data: { programs: Program[]; votes: Vote[] }) {
   }
 }
 
-// -------------------------------------------------------------
-// UNIFIED API IMPLEMENTATION (SUPPORTING PROMISES)
-// -------------------------------------------------------------
 export const db = {
   async getPrograms(): Promise<Program[]> {
     await ensureDbInitialized();
-    if (usePostgres && pool) {
-      const res = await pool.query('SELECT * FROM programs');
-      const programs: Program[] = res.rows;
-      return [...programs].sort((a, b) => {
+    if (usePostgres) {
+      const { data, error } = await supabase.from('programs').select('*');
+      if (error) {
+        console.error("Supabase getPrograms error, falling back to local:", error.message);
+        return [...readDb().programs].sort((a, b) => b.votes_count - a.votes_count);
+      }
+      return [...(data || [])].sort((a, b) => {
         if (b.votes_count !== a.votes_count) {
           return b.votes_count - a.votes_count;
         }
@@ -360,9 +332,13 @@ export const db = {
 
   async getProgramBySlug(slug: string): Promise<Program | null> {
     await ensureDbInitialized();
-    if (usePostgres && pool) {
-      const res = await pool.query('SELECT * FROM programs WHERE slug = $1', [slug]);
-      return res.rows[0] || null;
+    if (usePostgres) {
+      const { data, error } = await supabase.from('programs').select('*').eq('slug', slug).maybeSingle();
+      if (error) {
+        console.error("Supabase getProgramBySlug error, falling back to local:", error.message);
+        return readDb().programs.find(p => p.slug === slug) || null;
+      }
+      return data;
     } else {
       const { programs } = readDb();
       return programs.find(p => p.slug === slug) || null;
@@ -371,9 +347,13 @@ export const db = {
 
   async getProgramById(id: string): Promise<Program | null> {
     await ensureDbInitialized();
-    if (usePostgres && pool) {
-      const res = await pool.query('SELECT * FROM programs WHERE id = $1', [id]);
-      return res.rows[0] || null;
+    if (usePostgres) {
+      const { data, error } = await supabase.from('programs').select('*').eq('id', id).maybeSingle();
+      if (error) {
+        console.error("Supabase getProgramById error, falling back to local:", error.message);
+        return readDb().programs.find(p => p.id === id) || null;
+      }
+      return data;
     } else {
       const { programs } = readDb();
       return programs.find(p => p.id === id) || null;
@@ -382,15 +362,28 @@ export const db = {
 
   async createProgram(data: Omit<Program, 'id' | 'votes_count' | 'created_at' | 'updated_at'>): Promise<Program> {
     await ensureDbInitialized();
-    if (usePostgres && pool) {
+    if (usePostgres) {
       const id = 'p_' + Math.random().toString(36).substr(2, 9);
       const now = new Date().toISOString();
-      const res = await pool.query(`
-        INSERT INTO programs (id, title, slug, description, short_description, location, image_url, votes_count, status, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, 0, $8, $9, $10)
-        RETURNING *
-      `, [id, data.title, data.slug, data.description, data.short_description, data.location, data.image_url, data.status, now, now]);
-      return res.rows[0];
+      const { data: inserted, error } = await supabase.from('programs').insert({
+        id,
+        title: data.title,
+        slug: data.slug,
+        description: data.description,
+        short_description: data.short_description,
+        location: data.location,
+        image_url: data.image_url,
+        status: data.status,
+        votes_count: 0,
+        created_at: now,
+        updated_at: now
+      }).select().single();
+
+      if (error) {
+        console.error("Supabase createProgram error, falling back to local:", error.message);
+        throw error;
+      }
+      return inserted;
     } else {
       const dbData = readDb();
       const newProgram: Program = {
@@ -408,27 +401,17 @@ export const db = {
 
   async updateProgram(id: string, data: Partial<Omit<Program, 'id' | 'votes_count' | 'created_at' | 'updated_at'>>): Promise<Program | null> {
     await ensureDbInitialized();
-    if (usePostgres && pool) {
-      const current = await pool.query('SELECT * FROM programs WHERE id = $1', [id]);
-      if (current.rows.length === 0) return null;
-      const item = current.rows[0];
+    if (usePostgres) {
+      const { data: updated, error } = await supabase.from('programs').update({
+        ...data,
+        updated_at: new Date().toISOString()
+      }).eq('id', id).select().maybeSingle();
 
-      const updatedTitle = data.title !== undefined ? data.title : item.title;
-      const updatedSlug = data.slug !== undefined ? data.slug : item.slug;
-      const updatedDescription = data.description !== undefined ? data.description : item.description;
-      const updatedShortDescription = data.short_description !== undefined ? data.short_description : item.short_description;
-      const updatedLocation = data.location !== undefined ? data.location : item.location;
-      const updatedImageUrl = data.image_url !== undefined ? data.image_url : item.image_url;
-      const updatedStatus = data.status !== undefined ? data.status : item.status;
-      const now = new Date().toISOString();
-
-      const res = await pool.query(`
-        UPDATE programs
-        SET title = $1, slug = $2, description = $3, short_description = $4, location = $5, image_url = $6, status = $7, updated_at = $8
-        WHERE id = $9
-        RETURNING *
-      `, [updatedTitle, updatedSlug, updatedDescription, updatedShortDescription, updatedLocation, updatedImageUrl, updatedStatus, now, id]);
-      return res.rows[0];
+      if (error) {
+        console.error("Supabase updateProgram error, falling back to local:", error.message);
+        throw error;
+      }
+      return updated;
     } else {
       const dbData = readDb();
       const idx = dbData.programs.findIndex(p => p.id === id);
@@ -446,9 +429,13 @@ export const db = {
 
   async deleteProgram(id: string): Promise<boolean> {
     await ensureDbInitialized();
-    if (usePostgres && pool) {
-      const res = await pool.query('DELETE FROM programs WHERE id = $1', [id]);
-      return (res.rowCount ?? 0) > 0;
+    if (usePostgres) {
+      const { error } = await supabase.from('programs').delete().eq('id', id);
+      if (error) {
+        console.error("Supabase deleteProgram error:", error.message);
+        return false;
+      }
+      return true;
     } else {
       const dbData = readDb();
       const beforeLen = dbData.programs.length;
@@ -461,14 +448,21 @@ export const db = {
 
   async getVotes(programId?: string): Promise<Vote[]> {
     await ensureDbInitialized();
-    if (usePostgres && pool) {
+    if (usePostgres) {
+      let query = supabase.from('votes').select('*').order('created_at', { ascending: false });
       if (programId) {
-        const res = await pool.query('SELECT * FROM votes WHERE program_id = $1 ORDER BY created_at DESC', [programId]);
-        return res.rows;
-      } else {
-        const res = await pool.query('SELECT * FROM votes ORDER BY created_at DESC');
-        return res.rows;
+        query = query.eq('program_id', programId);
       }
+      const { data, error } = await query;
+      if (error) {
+        console.error("Supabase getVotes error, falling back to local:", error.message);
+        const { votes } = readDb();
+        if (programId) {
+          return votes.filter(v => v.program_id === programId).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        }
+        return votes.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      }
+      return data || [];
     } else {
       const { votes } = readDb();
       if (programId) {
@@ -480,40 +474,51 @@ export const db = {
 
   async addVote(programId: string, voterName: string, voterRt: string, ipAddress: string): Promise<{ success: boolean; message: string; vote?: Vote }> {
     await ensureDbInitialized();
-    if (usePostgres && pool) {
-      const progCheck = await pool.query('SELECT * FROM programs WHERE id = $1', [programId]);
-      if (progCheck.rows.length === 0) {
+    if (usePostgres) {
+      const { data: program, error: progError } = await supabase.from('programs').select('*').eq('id', programId).maybeSingle();
+      if (progError || !program) {
         return { success: false, message: "Program tidak ditemukan." };
       }
 
       const normalizedName = voterName.trim().toLowerCase();
       const normalizedRt = voterRt.trim();
 
-      const voteCheck = await pool.query(`
-        SELECT 1 FROM votes
-        WHERE program_id = $1 AND LOWER(TRIM(voter_name)) = $2 AND TRIM(voter_rt) = $3
-      `, [programId, normalizedName, normalizedRt]);
+      // Check unique constraint via standard filters
+      const { data: existingVotes, error: voteError } = await supabase
+        .from('votes')
+        .select('*')
+        .eq('program_id', programId)
+        .eq('voter_rt', normalizedRt);
 
-      if (voteCheck.rows.length > 0) {
+      const alreadyVoted = existingVotes?.some(v => v.voter_name.trim().toLowerCase() === normalizedName);
+      if (alreadyVoted) {
         return { success: false, message: "Anda sudah memberikan dukungan pada program ini." };
       }
 
       const voteId = 'v_' + Math.random().toString(36).substr(2, 9);
       const now = new Date().toISOString();
 
-      const insertRes = await pool.query(`
-        INSERT INTO votes (id, program_id, voter_name, voter_rt, ip_address, created_at)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING *
-      `, [voteId, programId, voterName.trim(), voterRt.trim(), ipAddress, now]);
+      const { data: insertRes, error: insertError } = await supabase.from('votes').insert({
+        id: voteId,
+        program_id: programId,
+        voter_name: voterName.trim(),
+        voter_rt: voterRt.trim(),
+        ip_address: ipAddress,
+        created_at: now
+      }).select().single();
 
-      await pool.query(`
-        UPDATE programs
-        SET votes_count = votes_count + 1, updated_at = $1
-        WHERE id = $2
-      `, [now, programId]);
+      if (insertError) {
+        console.error("Supabase addVote insert error:", insertError.message);
+        return { success: false, message: "Gagal menyimpan suara Anda." };
+      }
 
-      return { success: true, message: "Dukungan berhasil ditambahkan!", vote: insertRes.rows[0] };
+      // Increment votes count on program
+      await supabase.from('programs').update({
+        votes_count: (program.votes_count || 0) + 1,
+        updated_at: now
+      }).eq('id', programId);
+
+      return { success: true, message: "Dukungan berhasil ditambahkan!", vote: insertRes };
     } else {
       const dbData = readDb();
       const programIdx = dbData.programs.findIndex(p => p.id === programId);
@@ -554,18 +559,20 @@ export const db = {
 
   async deleteVote(voteId: string): Promise<boolean> {
     await ensureDbInitialized();
-    if (usePostgres && pool) {
-      const voteQuery = await pool.query('SELECT * FROM votes WHERE id = $1', [voteId]);
-      if (voteQuery.rows.length === 0) return false;
-      const vote = voteQuery.rows[0];
+    if (usePostgres) {
+      const { data: vote, error: voteError } = await supabase.from('votes').select('*').eq('id', voteId).maybeSingle();
+      if (voteError || !vote) return false;
 
-      await pool.query('DELETE FROM votes WHERE id = $1', [voteId]);
+      const { error: deleteError } = await supabase.from('votes').delete().eq('id', voteId);
+      if (deleteError) return false;
+
       const now = new Date().toISOString();
-      await pool.query(`
-        UPDATE programs
-        SET votes_count = GREATEST(0, votes_count - 1), updated_at = $1
-        WHERE id = $2
-      `, [now, vote.program_id]);
+      const { data: program } = await supabase.from('programs').select('votes_count').eq('id', vote.program_id).maybeSingle();
+      
+      await supabase.from('programs').update({
+        votes_count: Math.max(0, (program?.votes_count || 0) - 1),
+        updated_at: now
+      }).eq('id', vote.program_id);
 
       return true;
     } else {
@@ -592,11 +599,11 @@ export const db = {
     let programs: Program[] = [];
     let votes: Vote[] = [];
 
-    if (usePostgres && pool) {
-      const programsRes = await pool.query('SELECT * FROM programs');
-      const votesRes = await pool.query('SELECT * FROM votes');
-      programs = programsRes.rows;
-      votes = votesRes.rows;
+    if (usePostgres) {
+      const { data: programsData } = await supabase.from('programs').select('*');
+      const { data: votesData } = await supabase.from('votes').select('*');
+      programs = programsData || [];
+      votes = votesData || [];
     } else {
       const dbData = readDb();
       programs = dbData.programs;
