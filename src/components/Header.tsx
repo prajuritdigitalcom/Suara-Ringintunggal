@@ -19,14 +19,14 @@ export default function Header({ currentView, onNavigate, isAdminLoggedIn, onLog
             <img 
               src="https://i.ibb.co.com/tTzpHtJc/logo-ringintunggal-1.webp" 
               alt="Logo Desa Ringintunggal" 
-              className="h-10 w-auto object-contain sm:h-12"
+              className="h-11 w-auto object-contain sm:h-14"
               referrerPolicy="no-referrer"
             />
             <div>
-              <h1 className="text-sm sm:text-base md:text-lg font-display font-extrabold text-slate-900 tracking-tight leading-tight">
+              <h1 className="text-base sm:text-lg md:text-xl font-display font-extrabold text-slate-900 tracking-tight leading-tight">
                 Desa Ringintunggal
               </h1>
-              <p className="text-[8px] sm:text-[11px] text-emerald-600 font-bold whitespace-nowrap leading-none mt-0.5 sm:mt-1">
+              <p className="text-[10px] sm:text-xs md:text-sm text-emerald-600 font-bold whitespace-nowrap leading-none mt-1">
                 Kecamatan Gayam Kabupaten Bojonegoro
               </p>
             </div>
