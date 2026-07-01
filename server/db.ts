@@ -46,7 +46,12 @@ try {
 let usePostgres = !!(process.env.DATABASE_URL || process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL);
 
 let supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-let supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+// Use Service Role Key if available to bypass RLS on the server side securely, otherwise fallback to Anon Key
+let supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 
+                  process.env.SERVICE_ROLE_KEY || 
+                  process.env.SUPABASE_ANON_KEY || 
+                  process.env.VITE_SUPABASE_ANON_KEY || 
+                  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 // Auto-extract project reference from DATABASE_URL if needed
 if (!supabaseUrl && process.env.DATABASE_URL) {
@@ -60,12 +65,12 @@ if (!supabaseUrl && process.env.DATABASE_URL) {
 if (!supabaseUrl) {
   supabaseUrl = 'https://ppgdjrmcjsphrzynawkl.supabase.co';
 }
-if (!supabaseAnonKey) {
-  supabaseAnonKey = 'sb_publishable_ytQ5GSpM77ODYpYTxajU4Q_N6v6bWTt';
+if (!supabaseKey) {
+  supabaseKey = 'sb_publishable_ytQ5GSpM77ODYpYTxajU4Q_N6v6bWTt';
 }
 
 console.log("[DATABASE] Initializing Supabase client with URL:", supabaseUrl);
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 let initPromise: Promise<void> | null = null;
 
