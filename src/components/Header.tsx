@@ -10,7 +10,7 @@ interface HeaderProps {
 
 export default function Header({ currentView, onNavigate, isAdminLoggedIn, onLogout }: HeaderProps) {
   return (
-    <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-emerald-100 shadow-sm">
+    <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20">
           
@@ -34,7 +34,7 @@ export default function Header({ currentView, onNavigate, isAdminLoggedIn, onLog
 
           {/* Nav Actions */}
           <div className="flex items-center space-x-2">
-            {currentView !== 'home' && (
+            {currentView === 'admin-dashboard' && (
               <button
                 onClick={() => onNavigate('home')}
                 className="inline-flex items-center space-x-1 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50/50 hover:bg-emerald-50 border border-emerald-100 rounded-full transition-all"
