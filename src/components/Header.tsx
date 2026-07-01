@@ -23,18 +23,18 @@ export default function Header({ currentView, onNavigate, isAdminLoggedIn, onLog
               referrerPolicy="no-referrer"
             />
             <div>
-              <h1 className="text-base sm:text-xl font-display font-bold text-emerald-900 tracking-tight leading-tight">
-                Suara Warga
-              </h1>
-              <p className="text-2xs sm:text-xs text-emerald-600 font-medium">
+              <h1 className="text-sm sm:text-base md:text-lg font-display font-extrabold text-slate-900 tracking-tight leading-tight">
                 Desa Ringintunggal
+              </h1>
+              <p className="text-[8px] sm:text-[11px] text-emerald-600 font-bold whitespace-nowrap leading-none mt-0.5 sm:mt-1">
+                Kecamatan Gayam Kabupaten Bojonegoro
               </p>
             </div>
           </div>
 
           {/* Nav Actions */}
           <div className="flex items-center space-x-2">
-            {currentView !== 'home' ? (
+            {currentView !== 'home' && (
               <button
                 onClick={() => onNavigate('home')}
                 className="inline-flex items-center space-x-1 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50/50 hover:bg-emerald-50 border border-emerald-100 rounded-full transition-all"
@@ -42,16 +42,6 @@ export default function Header({ currentView, onNavigate, isAdminLoggedIn, onLog
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Kembali</span>
               </button>
-            ) : (
-              isAdminLoggedIn && (
-                <button
-                  onClick={() => onNavigate('admin-dashboard')}
-                  className="inline-flex items-center space-x-1.5 px-3 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-full transition-all shadow-xs"
-                >
-                  <LayoutGrid className="w-3.5 h-3.5" />
-                  <span>Panel Admin</span>
-                </button>
-              )
             )}
           </div>
 
