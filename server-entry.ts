@@ -286,6 +286,12 @@ app.post('/api/admin/upload', requireAdmin, (req, res) => {
       return res.status(400).json({ error: "Data gambar tidak lengkap" });
     }
     
+    // If running on Vercel, bypass writing to disk (since serverless filesystem is read-only & ephemeral)
+    // and directly return the base64 data URL. This keeps things 100% functional and persistent in DB.
+    if (process.env.VERCEL) {
+      return res.json({ url: image });
+    }
+    
     // Extract base64 format and raw data
     const matches = image.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
     if (!matches || matches.length !== 3) {
@@ -305,7 +311,14 @@ app.post('/api/admin/upload', requireAdmin, (req, res) => {
     // Return relative URL path
     res.json({ url: `/uploads/${uniqueFileName}` });
   } catch (error: any) {
-    console.error("[API] Error uploading image:", error);
+    console.warn("[API] Local upload failed, falling back to base64 data URL directly:", error.message);
+    // Safe fallback to bypass filesystem errors entirely
+    try {
+      const { image } = req.body;
+      if (image) {
+        return res.json({ url: image });
+      }
+    } catch (e) {}
     res.status(500).json({ error: "Gagal mengunggah gambar: " + error.message });
   }
 });

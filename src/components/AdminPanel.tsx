@@ -113,6 +113,48 @@ export default function AdminPanel({ token, onLogout, onNavigateHome, onSelectPr
     return () => clearTimeout(delayDebounceFn);
   }, [voteSearch, voteRtFilter, selectedProgramId, activeTab]);
 
+  // Helper to compress image client-side before upload to keep DB/network payloads small and fast (especially on Vercel)
+  const compressImage = (file: File, maxWidth = 900, maxHeight = 600, quality = 0.75): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve(event.target?.result as string);
+            return;
+          }
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve(dataUrl);
+        };
+        img.onerror = (err) => reject(err);
+      };
+      reader.onerror = (err) => reject(err);
+    });
+  };
+
   // Image upload handler
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -123,48 +165,33 @@ export default function AdminPanel({ token, onLogout, onNavigateHome, onSelectPr
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      setUploadError('Ukuran gambar maksimal adalah 5MB.');
-      return;
-    }
-
     setUploadingImage(true);
     setUploadError('');
 
     try {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64Data = reader.result as string;
-        
-        const uploadRes = await fetch('/api/admin/upload', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            image: base64Data,
-            fileName: file.name
-          })
-        });
+      const compressedBase64 = await compressImage(file);
+      
+      const uploadRes = await fetch('/api/admin/upload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          image: compressedBase64,
+          fileName: file.name
+        })
+      });
 
-        const uploadData = await uploadRes.json();
-        if (uploadRes.ok) {
-          setFormImageUrl(uploadData.url);
-          setSuccessMsg('Gambar berhasil diunggah!');
-          setTimeout(() => setSuccessMsg(''), 3000);
-        } else {
-          setUploadError(uploadData.error || 'Gagal mengunggah gambar');
-        }
-        setUploadingImage(false);
-      };
-
-      reader.onerror = () => {
-        setUploadError('Gagal membaca file gambar.');
-        setUploadingImage(false);
-      };
-
-      reader.readAsDataURL(file);
+      const uploadData = await uploadRes.json();
+      if (uploadRes.ok) {
+        setFormImageUrl(uploadData.url);
+        setSuccessMsg('Gambar berhasil diunggah!');
+        setTimeout(() => setSuccessMsg(''), 3000);
+      } else {
+        setUploadError(uploadData.error || 'Gagal mengunggah gambar');
+      }
+      setUploadingImage(false);
     } catch (err) {
       setUploadError('Terjadi kesalahan saat mengunggah.');
       setUploadingImage(false);
