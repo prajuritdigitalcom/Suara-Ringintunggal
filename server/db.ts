@@ -63,11 +63,16 @@ async function ensureDbInitialized() {
         try {
           await initPostgresDb();
         } catch (err: any) {
-          console.error("[DATABASE] Error in lazy initPostgresDb:", err.message);
+          console.error("[DATABASE] Error in lazy initPostgresDb, falling back to local database:", err.message);
+          usePostgres = false;
+          pool = null;
         }
       })();
     }
     await initPromise;
+    if (!usePostgres) {
+      initLocalDb();
+    }
   } else {
     initLocalDb();
   }

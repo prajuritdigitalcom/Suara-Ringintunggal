@@ -351,40 +351,40 @@ export default function AdminPanel({ token, onLogout, onNavigateHome, onSelectPr
       )}
 
       {/* Custom Segmented Tab Navigation - Mobile perfect! */}
-      <div className="bg-slate-100 p-1 rounded-xl flex gap-1 w-full border border-slate-200/50">
+      <div className="bg-slate-100 p-1 rounded-xl flex gap-1 w-full border border-slate-200/50 max-w-xl mx-auto">
         <button
           onClick={() => setActiveTab('stats')}
-          className={`flex-1 py-2 px-1 rounded-lg font-bold text-2xs transition-all flex flex-col items-center justify-center gap-1 cursor-pointer ${
+          className={`flex-1 py-1.5 px-2 rounded-lg font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
             activeTab === 'stats'
               ? 'bg-white text-slate-950 shadow-xs'
               : 'text-slate-500 hover:text-slate-900'
           }`}
         >
-          <BarChart3 className="w-4 h-4" />
+          <BarChart3 className="w-3.5 h-3.5" />
           <span>Statistik</span>
         </button>
         
         <button
           onClick={() => setActiveTab('programs')}
-          className={`flex-1 py-2 px-1 rounded-lg font-bold text-2xs transition-all flex flex-col items-center justify-center gap-1 cursor-pointer ${
+          className={`flex-1 py-1.5 px-2 rounded-lg font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
             activeTab === 'programs'
               ? 'bg-white text-slate-950 shadow-xs'
               : 'text-slate-500 hover:text-slate-900'
           }`}
         >
-          <FileText className="w-4 h-4" />
+          <FileText className="w-3.5 h-3.5" />
           <span>Program ({programs.length})</span>
         </button>
         
         <button
           onClick={() => setActiveTab('votes')}
-          className={`flex-1 py-2 px-1 rounded-lg font-bold text-2xs transition-all flex flex-col items-center justify-center gap-1 cursor-pointer ${
+          className={`flex-1 py-1.5 px-2 rounded-lg font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
             activeTab === 'votes'
               ? 'bg-white text-slate-950 shadow-xs'
               : 'text-slate-500 hover:text-slate-900'
           }`}
         >
-          <Users className="w-4 h-4" />
+          <Users className="w-3.5 h-3.5" />
           <span>Dukungan</span>
         </button>
       </div>
@@ -539,67 +539,45 @@ export default function AdminPanel({ token, onLogout, onNavigateHome, onSelectPr
       {/* ==================================== */}
       {activeTab === 'programs' && (
         <div className="space-y-6 animate-fadeIn">
-          
-          <div className="flex items-center justify-between">
-            <h3 className="font-display font-bold text-slate-900 text-lg sm:text-xl">Daftar Pembangunan Desa</h3>
-            <button
-              onClick={openAddProgram}
-              className="inline-flex items-center space-x-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl shadow-md transition-all cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Tambah Program</span>
-            </button>
-          </div>
+          {showProgramForm ? (
+            /* Dedicated input page/form instead of Pop Up */
+            <div className="space-y-4 animate-fadeIn">
+              <button
+                type="button"
+                onClick={() => setShowProgramForm(false)}
+                className="inline-flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-slate-800 transition-all cursor-pointer bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Kembali ke Daftar</span>
+              </button>
 
-          {/* Program Form Overlay / Collapsible */}
-          {showProgramForm && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-              <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs" onClick={() => setShowProgramForm(false)} />
-              
-              <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-emerald-50 z-10 max-h-[90vh] flex flex-col">
-                
-                {/* Form Header */}
-                <div className="px-6 py-5 bg-gradient-to-r from-emerald-50 to-white border-b border-emerald-100 flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <div className="p-2 bg-emerald-100 text-emerald-800 rounded-xl">
-                      <FileText className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="font-display font-bold text-slate-900 text-lg">
-                        {formMode === 'add' ? 'Tambah Program Baru' : 'Edit Program Pembangunan'}
-                      </h3>
-                      <p className="text-xs text-slate-500">Lengkapi isian form usulan di bawah ini</p>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => setShowProgramForm(false)}
-                    className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-full transition-all"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
+              <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-xs space-y-4">
+                <div className="border-b border-slate-100 pb-3">
+                  <h3 className="font-display font-black text-slate-900 text-base sm:text-lg">
+                    {formMode === 'add' ? 'Tambah Program Baru' : 'Ubah Program Pembangunan'}
+                  </h3>
+                  <p className="text-2xs sm:text-xs text-slate-500 mt-0.5">Lengkapi isian form usulan di bawah ini</p>
                 </div>
 
-                {/* Form Body (Scrollable) */}
-                <form onSubmit={handleProgramSubmit} className="p-6 overflow-y-auto space-y-4 flex-1">
-                  
+                <form onSubmit={handleProgramSubmit} className="space-y-4">
                   {/* Title */}
                   <div className="space-y-1">
-                    <label className="text-xs sm:text-sm font-bold text-slate-700">Judul Program *</label>
+                    <label className="text-xs font-bold text-slate-700">Judul Program *</label>
                     <input
                       type="text"
                       required
                       placeholder="Contoh: Perbaikan Jalan RT 03"
                       value={formTitle}
                       onChange={(e) => setFormTitle(e.target.value)}
-                      className="w-full px-4 py-2.5 bg-slate-50 focus:bg-white border border-slate-200 focus:border-emerald-500 rounded-xl outline-none text-sm font-semibold"
+                      className="w-full px-3.5 py-2 bg-slate-50 focus:bg-white border border-slate-200 focus:border-emerald-500 rounded-xl outline-none text-xs font-semibold"
                     />
                   </div>
 
-                  {/* Short Description (max 150) */}
+                  {/* Short Description */}
                   <div className="space-y-1">
                     <div className="flex justify-between items-center">
-                      <label className="text-xs sm:text-sm font-bold text-slate-700">Deskripsi Singkat (Maks 150 Karakter) *</label>
-                      <span className={`text-2xs font-bold ${formShortDesc.length > 150 ? 'text-red-500' : 'text-slate-400'}`}>
+                      <label className="text-xs font-bold text-slate-700">Deskripsi Singkat (Maks 150 Karakter) *</label>
+                      <span className={`text-[10px] font-bold ${formShortDesc.length > 150 ? 'text-red-500' : 'text-slate-400'}`}>
                         {formShortDesc.length}/150
                       </span>
                     </div>
@@ -610,45 +588,45 @@ export default function AdminPanel({ token, onLogout, onNavigateHome, onSelectPr
                       value={formShortDesc}
                       onChange={(e) => setFormShortDesc(e.target.value)}
                       rows={2}
-                      className="w-full px-4 py-2.5 bg-slate-50 focus:bg-white border border-slate-200 focus:border-emerald-500 rounded-xl outline-none text-sm font-medium"
+                      className="w-full px-3.5 py-2 bg-slate-50 focus:bg-white border border-slate-200 focus:border-emerald-500 rounded-xl outline-none text-xs font-medium"
                     />
                   </div>
 
                   {/* Full Description */}
                   <div className="space-y-1">
-                    <label className="text-xs sm:text-sm font-bold text-slate-700">Deskripsi Lengkap *</label>
+                    <label className="text-xs font-bold text-slate-700">Deskripsi Lengkap *</label>
                     <textarea
                       required
                       placeholder="Detail informasi usulan pembangunan, manfaat bagi warga, target penyelesaian, dll..."
                       value={formDesc}
                       onChange={(e) => setFormDesc(e.target.value)}
-                      rows={5}
-                      className="w-full px-4 py-2.5 bg-slate-50 focus:bg-white border border-slate-200 focus:border-emerald-500 rounded-xl outline-none text-sm font-medium leading-relaxed"
+                      rows={4}
+                      className="w-full px-3.5 py-2 bg-slate-50 focus:bg-white border border-slate-200 focus:border-emerald-500 rounded-xl outline-none text-xs font-medium leading-relaxed"
                     />
                   </div>
 
                   {/* Grid row: Location & Status */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {/* Location */}
                     <div className="space-y-1">
-                      <label className="text-xs sm:text-sm font-bold text-slate-700">Lokasi Program *</label>
+                      <label className="text-xs font-bold text-slate-700">Lokasi Program *</label>
                       <input
                         type="text"
                         required
                         placeholder="Contoh: RT 03 RW 01, Dusun Krajan"
                         value={formLocation}
                         onChange={(e) => setFormLocation(e.target.value)}
-                        className="w-full px-4 py-2.5 bg-slate-50 focus:bg-white border border-slate-200 focus:border-emerald-500 rounded-xl outline-none text-sm font-semibold"
+                        className="w-full px-3.5 py-2 bg-slate-50 focus:bg-white border border-slate-200 focus:border-emerald-500 rounded-xl outline-none text-xs font-semibold"
                       />
                     </div>
 
                     {/* Status */}
                     <div className="space-y-1">
-                      <label className="text-xs sm:text-sm font-bold text-slate-700">Status Program *</label>
+                      <label className="text-xs font-bold text-slate-700">Status Program *</label>
                       <select
                         value={formStatus}
                         onChange={(e) => setFormStatus(e.target.value)}
-                        className="w-full px-4 py-2.5 bg-slate-50 focus:bg-white border border-slate-200 focus:border-emerald-500 rounded-xl outline-none text-sm font-semibold cursor-pointer"
+                        className="w-full px-3.5 py-2 bg-slate-50 focus:bg-white border border-slate-200 focus:border-emerald-500 rounded-xl outline-none text-xs font-semibold cursor-pointer"
                       >
                         {statusOptions.map(st => (
                           <option key={st} value={st}>{st}</option>
@@ -658,31 +636,28 @@ export default function AdminPanel({ token, onLogout, onNavigateHome, onSelectPr
                   </div>
 
                   {/* Image Upload & URL input */}
-                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
-                    <label className="text-xs sm:text-sm font-bold text-slate-700 block">Gambar Program *</label>
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+                    <label className="text-xs font-bold text-slate-700 block">Gambar Program *</label>
                     
-                    {/* Image preview */}
                     {formImageUrl && (
-                      <div className="relative aspect-[16/8] max-w-xs bg-slate-100 rounded-xl overflow-hidden border border-slate-200">
+                      <div className="relative aspect-[16/8] max-w-xs bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
                         <img src={formImageUrl} alt="Preview" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                         <button
                           type="button"
                           onClick={() => setFormImageUrl('')}
-                          className="absolute top-2 right-2 p-1 bg-red-600 hover:bg-red-700 text-white rounded-full transition-colors shadow-sm"
+                          className="absolute top-1.5 right-1.5 p-1 bg-red-600 hover:bg-red-700 text-white rounded-full transition-colors shadow-xs"
                         >
-                          <X className="w-4 h-4" />
+                          <X className="w-3 h-3" />
                         </button>
                       </div>
                     )}
 
-                    {/* Upload button or text URL input */}
                     <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-                      {/* Local File Selector */}
                       <div className="sm:col-span-5">
-                        <label className="w-full flex flex-col items-center justify-center py-4 bg-white hover:bg-slate-50 border border-dashed border-slate-300 hover:border-emerald-400 rounded-xl cursor-pointer transition-all">
-                          <Upload className="w-6 h-6 text-slate-400 mb-1" />
-                          <span className="text-xs font-bold text-slate-600">Pilih File Komputer</span>
-                          <span className="text-3xs text-slate-400 mt-0.5">Maksimal 5MB</span>
+                        <label className="w-full flex flex-col items-center justify-center py-3 bg-white hover:bg-slate-50 border border-dashed border-slate-300 hover:border-emerald-400 rounded-xl cursor-pointer transition-all">
+                          <Upload className="w-5 h-5 text-slate-400 mb-0.5" />
+                          <span className="text-[10px] font-bold text-slate-600">Pilih File</span>
+                          <span className="text-[8px] text-slate-400">Maks 5MB</span>
                           <input
                             type="file"
                             accept="image/*"
@@ -691,109 +666,122 @@ export default function AdminPanel({ token, onLogout, onNavigateHome, onSelectPr
                             className="hidden"
                           />
                         </label>
-                        {uploadingImage && <p className="text-xs text-emerald-700 font-semibold mt-1">Sedang mengunggah...</p>}
-                        {uploadError && <p className="text-xs text-red-500 font-semibold mt-1">{uploadError}</p>}
+                        {uploadingImage && <p className="text-[10px] text-emerald-700 font-semibold mt-1">Sedang mengunggah...</p>}
+                        {uploadError && <p className="text-[10px] text-red-500 font-semibold mt-1">{uploadError}</p>}
                       </div>
 
-                      {/* URL input fallback */}
-                      <div className="sm:col-span-7 flex flex-col justify-center space-y-1.5">
-                        <span className="text-2xs font-extrabold text-slate-400">Atau masukkan Link Gambar eksternal:</span>
+                      <div className="sm:col-span-7 flex flex-col justify-center space-y-1">
+                        <span className="text-[10px] font-extrabold text-slate-400">Atau masukkan Link Gambar eksternal:</span>
                         <input
                           type="text"
                           placeholder="https://images.unsplash.com/photo-..."
                           value={formImageUrl}
                           onChange={(e) => setFormImageUrl(e.target.value)}
-                          className="w-full px-4 py-2 bg-white border border-slate-200 focus:border-emerald-500 rounded-xl outline-none text-xs"
+                          className="w-full px-3 py-1.5 bg-white border border-slate-200 focus:border-emerald-500 rounded-lg outline-none text-2xs"
                         />
                       </div>
                     </div>
                   </div>
 
                   {/* Form actions */}
-                  <div className="pt-4 border-t border-slate-100 flex items-center justify-end space-x-2">
+                  <div className="pt-3 border-t border-slate-100 flex items-center justify-end space-x-2">
                     <button
                       type="button"
                       disabled={loading}
                       onClick={() => setShowProgramForm(false)}
-                      className="px-5 py-2.5 text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all"
+                      className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 border border-slate-200 rounded-lg transition-all"
                     >
                       Batal
                     </button>
                     <button
                       type="submit"
                       disabled={loading || uploadingImage}
-                      className="px-5 py-2.5 text-xs sm:text-sm font-extrabold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-md transition-all disabled:opacity-50"
+                      className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition-all disabled:opacity-50"
                     >
                       {loading ? 'Menyimpan...' : 'Simpan Program'}
                     </button>
                   </div>
-
                 </form>
-
               </div>
             </div>
-          )}
-
-          {/* Programs Table / Grid list */}
-          {programs.length > 0 ? (
-            <div className="space-y-3">
-              {programs.map(p => (
-                <div key={p.id} className="bg-white rounded-2xl border border-slate-100 p-3 shadow-2xs flex flex-col gap-3">
-                  <div className="flex gap-3">
-                    <img src={p.image_url} alt="" className="w-20 h-16 object-cover rounded-xl border border-slate-100 shrink-0" referrerPolicy="no-referrer" />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="inline-flex px-1.5 py-0.5 font-bold text-[9px] rounded-md bg-emerald-50 border border-emerald-100 text-emerald-800">
-                          {p.status}
-                        </span>
-                        <span className="font-extrabold text-emerald-800 text-[10px] shrink-0 bg-emerald-50/50 px-2 py-0.5 rounded-full">
-                          {p.votes_count} Dukungan
-                        </span>
-                      </div>
-                      <h4 className="font-bold text-slate-900 text-xs mt-1 line-clamp-1">{p.title}</h4>
-                      <p className="text-[10px] text-slate-500 mt-0.5 line-clamp-2 leading-tight">{p.short_description}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-50 text-[10px]">
-                    <span className="text-slate-500 truncate max-w-[120px]">📍 {p.location}</span>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        onClick={() => onSelectProgram(p.slug)}
-                        className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-50 border border-slate-100 text-slate-700 font-bold rounded-lg hover:bg-slate-100 active:scale-95 transition-all cursor-pointer"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>Lihat</span>
-                      </button>
-                      <button
-                        onClick={() => openEditProgram(p)}
-                        className="flex items-center gap-1 px-2.5 py-1.5 bg-blue-50 border border-blue-100 text-blue-700 font-bold rounded-lg hover:bg-blue-100 active:scale-95 transition-all cursor-pointer"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                        <span>Ubah</span>
-                      </button>
-                      <button
-                        onClick={() => handleDeleteProgram(p.id, p.title)}
-                        className="flex items-center gap-1 px-2.5 py-1.5 bg-red-50 border border-red-100 text-red-700 font-bold rounded-lg hover:bg-red-100 active:scale-95 transition-all cursor-pointer"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>Hapus</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
           ) : (
-            <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200">
-              <FileText className="w-16 h-16 text-slate-300 mx-auto mb-3" />
-              <p className="font-bold text-slate-500 text-base">Tidak ada program ditemukan</p>
-              <button onClick={openAddProgram} className="mt-4 px-5 py-2.5 bg-emerald-600 text-white text-xs sm:text-sm font-bold rounded-xl shadow-md">
-                Buat Program Pertama
-              </button>
-            </div>
-          )}
+            <>
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                <div>
+                  <h3 className="font-display font-bold text-slate-800 text-sm sm:text-base">Daftar Pembangunan Desa</h3>
+                  <p className="text-[10px] text-slate-500">Daftar usulan program yang sedang berjalan atau diusulkan.</p>
+                </div>
+                <button
+                  onClick={openAddProgram}
+                  className="inline-flex items-center justify-center space-x-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg shadow-sm transition-all cursor-pointer w-full sm:w-auto"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Tambah Program</span>
+                </button>
+              </div>
 
+              {/* List */}
+              {programs.length > 0 ? (
+                <div className="space-y-3">
+                  {programs.map(p => (
+                    <div key={p.id} className="bg-white rounded-2xl border border-slate-100 p-3 shadow-2xs flex flex-col justify-between gap-3">
+                      <div className="flex gap-3">
+                        <img src={p.image_url} alt="" className="w-20 h-16 object-cover rounded-xl border border-slate-100 shrink-0" referrerPolicy="no-referrer" />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="inline-flex px-1.5 py-0.5 font-bold text-[9px] rounded-md bg-emerald-50 border border-emerald-100 text-emerald-800">
+                              {p.status}
+                            </span>
+                            <span className="font-extrabold text-emerald-800 text-[10px] shrink-0 bg-emerald-50/50 px-2 py-0.5 rounded-full">
+                              {p.votes_count} Dukungan
+                            </span>
+                          </div>
+                          <h4 className="font-bold text-slate-900 text-xs mt-1 line-clamp-1">{p.title}</h4>
+                          <p className="text-[10px] text-slate-500 mt-0.5 line-clamp-2 leading-tight">{p.short_description}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between pt-2 border-t border-slate-50 text-[10px]">
+                        <span className="text-slate-500 truncate max-w-[120px]">📍 {p.location}</span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            onClick={() => onSelectProgram(p.slug)}
+                            className="flex items-center gap-1 px-2 py-1 bg-slate-50 border border-slate-100 text-slate-700 font-bold rounded-lg hover:bg-slate-100 active:scale-95 transition-all cursor-pointer"
+                          >
+                            <Eye className="w-3 h-3" />
+                            <span>Lihat</span>
+                          </button>
+                          <button
+                            onClick={() => openEditProgram(p)}
+                            className="flex items-center gap-1 px-2 py-1 bg-blue-50 border border-blue-100 text-blue-700 font-bold rounded-lg hover:bg-blue-100 active:scale-95 transition-all cursor-pointer"
+                          >
+                            <Edit2 className="w-3 h-3" />
+                            <span>Ubah</span>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteProgram(p.id, p.title)}
+                            className="flex items-center gap-1 px-2 py-1 bg-red-50 border border-red-100 text-red-700 font-bold rounded-lg hover:bg-red-100 active:scale-95 transition-all cursor-pointer"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            <span>Hapus</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200">
+                  <FileText className="w-16 h-16 text-slate-300 mx-auto mb-3" />
+                  <p className="font-bold text-slate-500 text-base">Tidak ada program ditemukan</p>
+                  <button onClick={openAddProgram} className="mt-4 px-5 py-2.5 bg-emerald-600 text-white text-xs sm:text-sm font-bold rounded-xl shadow-md">
+                    Buat Program Pertama
+                  </button>
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
 
@@ -810,11 +798,11 @@ export default function AdminPanel({ token, onLogout, onNavigateHome, onSelectPr
             </div>
           </div>
 
-          {/* Filtering Tools Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-            {/* Search */}
-            <div className="relative sm:col-span-5">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
+          {/* Filtering Tools Row - 2 Rows Design */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-2xs space-y-3">
+            {/* Baris 1: Cari Berdasarkan */}
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
                 placeholder="Cari berdasarkan nama pendukung..."
@@ -824,32 +812,35 @@ export default function AdminPanel({ token, onLogout, onNavigateHome, onSelectPr
               />
             </div>
 
-            {/* RT filter */}
-            <div className="relative sm:col-span-3">
-              <select
-                value={voteRtFilter}
-                onChange={(e) => setVoteRtFilter(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-slate-200 focus:border-emerald-500 rounded-xl outline-none text-xs font-semibold cursor-pointer transition-all"
-              >
-                <option value="Semua">Semua RT</option>
-                {rtOptions.map(rt => (
-                  <option key={rt} value={rt}>{rt}</option>
-                ))}
-              </select>
-            </div>
+            {/* Baris 2: Filter RT dan Program */}
+            <div className="grid grid-cols-2 gap-3">
+              {/* RT filter */}
+              <div className="relative">
+                <select
+                  value={voteRtFilter}
+                  onChange={(e) => setVoteRtFilter(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-slate-200 focus:border-emerald-500 rounded-xl outline-none text-xs font-semibold cursor-pointer transition-all"
+                >
+                  <option value="Semua">Semua RT</option>
+                  {rtOptions.map(rt => (
+                    <option key={rt} value={rt}>{rt}</option>
+                  ))}
+                </select>
+              </div>
 
-            {/* Program selection filter */}
-            <div className="relative sm:col-span-4">
-              <select
-                value={selectedProgramId}
-                onChange={(e) => setSelectedProgramId(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-slate-200 focus:border-emerald-500 rounded-xl outline-none text-xs font-semibold cursor-pointer transition-all"
-              >
-                <option value="Semua">Semua Program</option>
-                {programs.map(p => (
-                  <option key={p.id} value={p.id}>{p.title}</option>
-                ))}
-              </select>
+              {/* Program selection filter */}
+              <div className="relative">
+                <select
+                  value={selectedProgramId}
+                  onChange={(e) => setSelectedProgramId(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 hover:bg-slate-100/50 focus:bg-white border border-slate-200 focus:border-emerald-500 rounded-xl outline-none text-xs font-semibold cursor-pointer transition-all"
+                >
+                  <option value="Semua">Semua Program</option>
+                  {programs.map(p => (
+                    <option key={p.id} value={p.id}>{p.title}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
