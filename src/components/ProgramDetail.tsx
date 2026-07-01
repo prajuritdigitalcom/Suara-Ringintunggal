@@ -283,7 +283,7 @@ export default function ProgramDetail({ program, votes, onBack, onVoteSuccess, o
               <h3 className="font-display font-bold text-slate-900 text-base sm:text-lg">
                 Formulir Dukungan Warga
               </h3>
-              <p className="text-[9px] sm:text-xs text-slate-500">1 nama & RT hanya bisa mendukung 1 kali</p>
+              <p className="text-xs text-slate-500">1 nama & RT hanya bisa mendukung 1 kali</p>
             </div>
           </div>
         </div>
